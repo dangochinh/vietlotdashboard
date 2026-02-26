@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
-import { Loader2, TrendingUp, Calendar, AlertCircle, Wand2, X, Info, Heart, Rocket, Code2 } from 'lucide-react';
+import { Loader2, TrendingUp, Calendar, AlertCircle, Wand2, X, Info, Heart, Rocket, Code2, Send } from 'lucide-react';
 
 const Ball = ({ num, isSpecial }) => {
   if (!num) return null;
@@ -277,7 +277,7 @@ export default function Dashboard() {
         {/* Prediction Modal */}
         {predictModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-gray-900 border border-gray-700 p-6 rounded-2xl shadow-2xl w-full max-w-md relative animate-in zoom-in-95 duration-200">
+            <div className="bg-gray-900 border border-gray-700 p-6 rounded-2xl shadow-2xl w-full max-w-md relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
               <button
                 onClick={() => setPredictModalOpen(false)}
                 className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
@@ -301,7 +301,7 @@ export default function Dashboard() {
                   onChange={(e) => setInputNumber(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handlePredict()}
                   placeholder="Nhập 1 số (vd: 05)"
-                  className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-mono text-lg text-center"
+                  className="flex-1 min-w-0 w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-mono text-base md:text-lg text-center"
                 />
                 <button
                   onClick={handlePredict}
@@ -318,15 +318,35 @@ export default function Dashboard() {
               )}
 
               {predictedNumbers.length > 0 && (
-                <div className="mt-6 pt-6 border-t border-gray-800 animate-in fade-in slide-in-from-bottom-2">
+                <div className="mt-6 pt-6 border-t border-gray-800 animate-in fade-in slide-in-from-bottom-2 flex-1 overflow-y-auto custom-scrollbar">
                   <p className="text-sm text-gray-400 mb-3 font-medium">Bộ số gợi ý tốt nhất:</p>
-                  <div className="flex flex-wrap gap-2 justify-center">
+                  <div className="flex flex-wrap gap-2 justify-center pb-4">
                     <Ball num={inputNumber.padStart(2, '0').trim()} isSpecial={true} />
                     <div className="w-px h-10 bg-gray-700 mx-1 align-middle self-center"></div>
                     {predictedNumbers.map((num, i) => (
                       <Ball key={i} num={num} />
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Sticky SMS Send Button */}
+              {predictedNumbers.length > 0 && (
+                <div className="mt-2 sticky bottom-0 bg-gray-900 pt-2 pb-1 z-10 animate-in fade-in slide-in-from-bottom-4">
+                  <button
+                    onClick={() => {
+                      const baseNum = inputNumber.padStart(2, '0').trim();
+                      const allNums = [baseNum, ...predictedNumbers].sort((a, b) => parseInt(a) - parseInt(b));
+                      const code = activeTab === 'Mega645' ? '645' : '655';
+                      const smsBody = `${code} K1 S ${allNums.join(' ')}`;
+                      window.location.href = `sms:9969?body=${encodeURIComponent(smsBody)}`;
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white rounded-xl font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all active:scale-[0.98]"
+                  >
+                    <Send className="w-5 h-5" />
+                    Mua Vé Ngay Qua SMS
+                  </button>
+                  <p className="text-center text-[10px] text-gray-500 mt-2">Tính năng tạo tự động cú pháp gửi đến 9969 (Đại lý Vietlott SMS)</p>
                 </div>
               )}
             </div>
@@ -658,11 +678,10 @@ export default function Dashboard() {
                   <div className="flex flex-col sm:flex-row gap-4 items-center justify-start">
                     <div className="bg-white p-1.5 rounded-xl shadow-lg shrink-0 w-24 h-24 flex items-center justify-center">
                       <img
-                        src="https://vietlott.vn/images/Logo-Vietlott.png" // Placeholder, in loto we used /donation-qr.jpg
-                        alt="QR Code"
-                        className="max-w-full max-h-full object-contain grayscale opacity-20"
+                        src="/donation-qr.jpg"
+                        alt="QR Code Momo"
+                        className="max-w-full max-h-full object-contain rounded-lg"
                       />
-                      {/* Note: User told me "tham khảo mục ủng hộ của project loto", in loto it used /donation-qr.jpg but we don't have it here, I will leave the number visible */}
                     </div>
                     <div className="text-sm space-y-2 text-left bg-black/40 p-3 rounded-lg border border-gray-700/50 flex-1 w-full">
                       <p className="flex justify-between items-center"><strong className="text-pink-400">MoMo:</strong> <span className="font-mono text-white bg-gray-800 px-2 rounded">0363839007</span></p>
