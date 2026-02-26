@@ -292,7 +292,7 @@ export default function Dashboard() {
                   {activeTab === 'Mega645' ? 'Mega 6/45' : 'Power 6/55'}
                 </span>
               </h2>
-              <p className="text-gray-400 text-sm mb-6">Nhập 1 số bạn thích. Hệ thống sẽ phân tích lịch sử {data.length} kỳ quay để tìm ra 5 số thường xuất hiện cùng Số đó nhất.</p>
+              <p className="text-gray-400 text-sm mb-6">Nhập 1 số bạn thích. Hệ thống sẽ phân tích toàn bộ lịch sử {data.length} kỳ quay để tìm ra 5 số thường xuất hiện cùng Số đó nhất.</p>
 
               <div className="flex gap-3 mb-4">
                 <input
