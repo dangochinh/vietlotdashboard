@@ -53,9 +53,21 @@ export async function GET(request) {
             return NextResponse.json({ success: true, data: [] });
         }
 
-        // Parse Headers
-        const headers = rows[0];
-        const data = rows.slice(1).map((row) => {
+        // Check if the first row is actually headers or data
+        // Data rows usually have "Kỳ" (from our seed) or a date.
+        // If it lacks 'Kỳ QSMT', we might not have headers, or the headers are missing.
+        let dataStartIndex = 1;
+        let headers = rows[0];
+
+        if (!headers.includes("Kỳ QSMT / Ngày")) {
+            headers = ["Kỳ QSMT / Ngày", "Số 1", "Số 2", "Số 3", "Số 4", "Số 5", "Số 6", "Số Đặc Biệt", "Ngày Cào"];
+            // If the first row looks like data, start from 0
+            if (rows[0][0] && rows[0][0].includes("Kỳ")) {
+                dataStartIndex = 0;
+            }
+        }
+
+        const data = rows.slice(dataStartIndex).map((row) => {
             // row is an array of strings: [Kỳ QSMT / Ngày, Số 1, Số 2, Số 3, Số 4, Số 5, Số 6, Số Đặc Biệt, Ngày Cào]
             const obj = {};
             headers.forEach((header, index) => {
