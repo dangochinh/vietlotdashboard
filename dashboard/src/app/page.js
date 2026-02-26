@@ -429,84 +429,53 @@ export default function Dashboard() {
 
             {/* Jackpot Layout */}
             {jackpotData && (
-              <section className={`rounded-3xl p-6 md:p-8 border shadow-lg relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 transition-all
-                ${activeTab === 'Mega645'
-                  ? 'bg-gradient-to-r from-red-50 to-pink-50 border-red-100'
-                  : 'bg-gradient-to-r from-orange-50 to-amber-50 border-orange-100'}`}
-              >
-                {/* Left Tag & Logo Area */}
-                <div className="flex flex-col items-start gap-4 w-full md:w-1/3">
-                  <div className={`px-4 py-1.5 rounded-lg text-white font-bold text-sm shadow-sm
-                    ${activeTab === 'Mega645' ? 'bg-red-600' : 'bg-red-600'}`}>
-                    Kỳ Xổ Tới
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {/* Placeholder for real logo, using styled text for now */}
-                    <div className="font-black italic tracking-tighter text-3xl md:text-4xl drop-shadow-sm flex items-center">
-                      {activeTab === 'Mega645' ? (
-                        <>
-                          <span className="text-red-700">Mega</span>
-                          <span className="text-white bg-red-600 rounded-full w-10 h-10 flex items-center justify-center text-xl ml-1 shadow-md">6/45</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="text-amber-700 uppercase">Power</span>
-                          <span className="text-white bg-amber-600 rounded-full w-10 h-10 flex items-center justify-center text-xl ml-1 shadow-md">6/55</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
+              <section className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 md:p-8 border border-gray-700 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col items-center justify-center text-center">
+                <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-yellow-500/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-[-50px] left-[-50px] w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl"></div>
 
-                {/* Center Jackpot Area */}
-                <div className="flex flex-col items-center justify-center w-full md:w-1/3 text-center">
-                  {activeTab === 'Mega645' ? (
-                    <>
-                      <p className="text-red-500 font-semibold text-lg md:text-xl mb-1">Giá trị Jackpot</p>
-                      <p className="text-3xl md:text-4xl lg:text-5xl font-black text-red-600 drop-shadow-sm">
-                        {jackpotData.jackpot1}
-                        <span className="text-lg md:text-xl ml-1 font-bold">đ</span>
-                      </p>
-                    </>
-                  ) : (
-                    <div className="flex flex-col gap-4">
-                      <div>
-                        <p className="text-amber-700/80 font-semibold text-lg md:text-xl mb-1">Giá trị Jackpot 1</p>
-                        <p className="text-3xl md:text-4xl font-black text-amber-700 drop-shadow-sm">
+                <h2 className="text-xl md:text-2xl font-bold text-gray-300 mb-2 drop-shadow-sm flex items-center justify-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+                  Giá trị Jackpot Ước Tính
+                </h2>
+
+                {activeTab === 'Mega645' ? (
+                  <p className="text-4xl md:text-6xl font-black mb-4 flex items-baseline justify-center">
+                    <span className="bg-clip-text text-transparent bg-gradient-to-b from-yellow-300 to-amber-500 drop-shadow-md">
+                      {jackpotData.jackpot1}
+                    </span>
+                    <span className="text-2xl md:text-3xl text-amber-500 ml-2">VNĐ</span>
+                  </p>
+                ) : (
+                  <div className="flex flex-col md:flex-row gap-6 md:gap-16 mb-4 mt-2">
+                    <div>
+                      <p className="text-sm font-bold text-gray-400 mb-1 uppercase tracking-widest">Jackpot 1</p>
+                      <p className="text-3xl md:text-5xl font-black flex items-baseline justify-center">
+                        <span className="bg-clip-text text-transparent bg-gradient-to-b from-yellow-300 to-amber-500 drop-shadow-md">
                           {jackpotData.jackpot1 || '???'}
-                          <span className="text-lg md:text-xl ml-1 font-bold">đ</span>
+                        </span>
+                        <span className="text-xl md:text-2xl text-amber-500 ml-2">VNĐ</span>
+                      </p>
+                    </div>
+                    {jackpotData.jackpot2 && (
+                      <div>
+                        <p className="text-sm font-bold text-gray-400 mb-1 uppercase tracking-widest">Jackpot 2</p>
+                        <p className="text-3xl md:text-5xl font-black flex items-baseline justify-center">
+                          <span className="bg-clip-text text-transparent bg-gradient-to-b from-emerald-300 to-teal-500 drop-shadow-md">
+                            {jackpotData.jackpot2}
+                          </span>
+                          <span className="text-xl md:text-2xl text-teal-500 ml-2">VNĐ</span>
                         </p>
                       </div>
-                      {jackpotData.jackpot2 && (
-                        <div className="pt-3 border-t border-amber-200/50">
-                          <p className="text-amber-700/80 font-semibold text-md mb-1">Giá trị Jackpot 2</p>
-                          <p className="text-2xl md:text-3xl font-black text-amber-600 drop-shadow-sm">
-                            {jackpotData.jackpot2}
-                            <span className="text-md ml-1 font-bold">đ</span>
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {/* Countdown line under jackpot */}
-                  <div className="mt-4 border-t-2 border-black/80 px-4 pt-1 inline-block">
-                    <span className="text-xl md:text-2xl font-mono tracking-widest font-medium text-gray-900">{countdown}</span>
+                    )}
                   </div>
-                </div>
+                )}
 
-                {/* Right Action Area */}
-                <div className="flex flex-col items-end justify-center w-full md:w-1/3 gap-3 text-right">
-                  <div className="text-gray-800">
-                    <p className="font-semibold text-lg">Kỳ tới sắp xổ</p>
-                    {/* <p className="text-sm text-gray-600">Thời gian đóng dự thưởng lúc 17:45</p> */}
+                <div className="mt-4 flex flex-col items-center gap-2">
+                  <div className="bg-black/40 border border-gray-700 backdrop-blur-sm px-6 py-2.5 rounded-2xl flex items-center gap-3">
+                    <Timer className="w-5 h-5 text-gray-400 animate-pulse" />
+                    <span className="text-gray-300 font-medium">Kỳ Quay Thưởng Tiếp Theo:</span>
+                    <span className="text-xl md:text-2xl font-mono tracking-widest font-black text-white">{countdown}</span>
                   </div>
-                  <button
-                    onClick={() => setPredictModalOpen(true)}
-                    className={`mt-2 px-6 py-2.5 rounded-full font-bold text-white shadow-md transition-transform hover:scale-105 active:scale-95
-                    ${activeTab === 'Mega645' ? 'bg-red-500 hover:bg-red-600' : 'bg-amber-500 hover:bg-amber-600'}`}
-                  >
-                    Dự Đoán Ngay
-                  </button>
                 </div>
               </section>
             )}

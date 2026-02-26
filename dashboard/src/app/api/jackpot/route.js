@@ -29,13 +29,13 @@ export async function GET(request) {
         let jackpot2 = null;
 
         if (type === 'Mega645') {
-            const megaMatch = /Jackpot[^\d]+([0-9.,]{8,})/i.exec(html);
+            const megaMatch = /DT6X45_G_JACKPOT[^>]*>([0-9.,]{8,})/i.exec(html);
             if (megaMatch) {
                 jackpot1 = megaMatch[1].replace(/,/g, '.'); // Format to standard dots for billions
             }
         } else {
-            const jp1Match = /Jackpot\s*1[^\d]+([0-9.,]{8,})/i.exec(html);
-            const jp2Match = /Jackpot\s*2[^\d]+([0-9.,]{8,})/i.exec(html);
+            const jp1Match = /DT6X55_G_JACKPOT[^>]*>([0-9.,]{8,})/i.exec(html);
+            const jp2Match = /DT6X55_G_JACKPOT2[^>]*>([0-9.,]{8,})/i.exec(html);
 
             if (jp1Match) jackpot1 = jp1Match[1].replace(/,/g, '.');
             if (jp2Match) jackpot2 = jp2Match[1].replace(/,/g, '.');
