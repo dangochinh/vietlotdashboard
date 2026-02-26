@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs';
 
+// Force Next.js to dynamically evaluate this route at request time
+export const dynamic = 'force-dynamic';
+
 // Helper to get Google Auth
 async function getGoogleAuth() {
     let credentials;
