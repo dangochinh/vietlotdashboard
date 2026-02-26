@@ -551,12 +551,12 @@ export default function Dashboard() {
 
               <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
                 <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-gray-500 uppercase bg-[#161B22] rounded-lg">
+                  <thead className="text-xs text-slate-200 uppercase bg-slate-800/80 rounded-lg shadow-sm">
                     <tr>
-                      <th className="px-4 py-3 rounded-tl-lg rounded-bl-lg w-20 text-gray-300 font-semibold tracking-wide">
+                      <th className="px-4 py-3 rounded-tl-lg rounded-bl-lg w-20 font-bold tracking-wider">
                         {viewAllModal.type === 'frequency' ? 'Số' : 'Bộ Số'}
                       </th>
-                      <th className="px-4 py-3 text-gray-300 font-semibold tracking-wide">Tần Suất / So Sánh</th>
+                      <th className="px-4 py-3 font-bold tracking-wider">Tần Suất / So Sánh</th>
                     </tr>
                   </thead>
                   <tbody>
