@@ -239,9 +239,12 @@ export default function Dashboard() {
                 <X className="w-5 h-5" />
               </button>
 
-              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-400 flex items-center gap-2 mb-2">
+              <h2 className="text-2xl font-bold flex items-center gap-2 mb-2">
                 <Wand2 className="w-6 h-6 text-purple-400" />
-                Dự Đoán {activeTab}
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-400 drop-shadow-sm">Dự Đoán</span>
+                <span className="px-3 py-0.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow-[0_0_15px_rgba(147,51,234,0.4)] border border-purple-400/50 text-xl tracking-wide">
+                  {activeTab === 'Mega645' ? 'Mega 6/45' : 'Power 6/55'}
+                </span>
               </h2>
               <p className="text-gray-400 text-sm mb-6">Nhập 1 số bạn thích. Hệ thống sẽ phân tích lịch sử {data.length} kỳ quay để tìm ra 5 số thường xuất hiện cùng Số đó nhất.</p>
 
