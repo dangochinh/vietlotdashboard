@@ -4,6 +4,7 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import { MAX_NUMBERS } from './lib/constants';
 import { useVietlottData } from './hooks/useVietlottData';
 import { useCountdown } from './hooks/useCountdown';
+import { predictByCoOccurrence, predictBy4LayerFiltering } from './lib/prediction';
 
 import Header from './components/Header';
 import JackpotCard from './components/JackpotCard';
@@ -28,6 +29,8 @@ export default function Dashboard() {
   const [inputNumber, setInputNumber] = useState('');
   const [predictedNumbers, setPredictedNumbers] = useState([]);
   const [predictError, setPredictError] = useState('');
+  const [algorithmType, setAlgorithmType] = useState('co-occurrence');
+  const [isPredicting, setIsPredicting] = useState(false);
 
   // Data hooks
   const { data, loading, error, jackpotData, lastUpdated } = useVietlottData(activeTab);
@@ -35,37 +38,24 @@ export default function Dashboard() {
 
   // Prediction logic
   const handlePredict = () => {
+    setIsPredicting(true);
     setPredictError('');
     setPredictedNumbers([]);
-    let num = inputNumber.trim();
-    if (num.length === 1) num = '0' + num;
-    const maxNum = MAX_NUMBERS[activeTab];
 
-    if (!num || isNaN(num) || parseInt(num) < 1 || parseInt(num) > maxNum) {
-      setPredictError(`Vui lòng nhập số từ 01 đến ${maxNum}`);
-      return;
-    }
-
-    const relevantDraws = data.filter(row => {
-      for (let i = 1; i <= 6; i++) { if (row[`Số ${i}`] === num) return true; }
-      return false;
-    });
-
-    if (relevantDraws.length === 0) { setPredictError('Chưa có lịch sử đủ dài cho số này.'); return; }
-
-    const counts = {};
-    relevantDraws.forEach(row => {
-      for (let i = 1; i <= 6; i++) {
-        const val = row[`Số ${i}`];
-        if (val && val !== num) counts[val] = (counts[val] || 0) + 1;
+    // UI needs to update loading state before doing heavy compute loop
+    setTimeout(() => {
+      let result;
+      if (algorithmType === 'co-occurrence') {
+        result = predictByCoOccurrence(inputNumber, activeTab, data);
+      } else {
+        result = predictBy4LayerFiltering(inputNumber, activeTab, data);
       }
-    });
 
-    const topChoices = Object.keys(counts).filter(k => counts[k] > 0).sort((a, b) => counts[b] - counts[a]).slice(0, 5);
-    if (topChoices.length === 0) { setPredictError('Số này chưa từng xuất hiện cùng số nào khác.'); return; }
-    setPredictedNumbers(topChoices.sort((a, b) => parseInt(a) - parseInt(b)));
+      setPredictError(result.error);
+      if (result.numbers) setPredictedNumbers(result.numbers);
+      setIsPredicting(false);
+    }, 50);
   };
-
   // Computed data — uses English keys internally
   const frequencyData = useMemo(() => {
     if (!data || data.length === 0) return { top15: [], full: [] };
@@ -153,6 +143,9 @@ export default function Dashboard() {
           predictedNumbers={predictedNumbers}
           predictError={predictError}
           onPredict={handlePredict}
+          algorithmType={algorithmType}
+          setAlgorithmType={setAlgorithmType}
+          isPredicting={isPredicting}
         />
 
         {loading ? (

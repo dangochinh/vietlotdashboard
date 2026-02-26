@@ -1,11 +1,11 @@
-import { Wand2, X, AlertCircle, Send } from 'lucide-react';
+import { Wand2, X, AlertCircle, Send, Loader2 } from 'lucide-react';
 import Ball from './Ball';
 
 export default function PredictModal({
     isOpen, onClose, activeTab, data,
     inputNumber, setInputNumber,
     predictedNumbers, predictError,
-    onPredict
+    onPredict, algorithmType, setAlgorithmType, isPredicting
 }) {
     if (!isOpen) return null;
 
@@ -23,7 +23,28 @@ export default function PredictModal({
                         {activeTab === 'Mega645' ? 'Mega 6/45' : 'Power 6/55'}
                     </span>
                 </h2>
-                <p className="text-gray-400 text-sm mb-6">Nhập 1 số bạn thích. Hệ thống sẽ phân tích toàn bộ lịch sử {data.length} kỳ quay để tìm ra 5 số thường xuất hiện cùng Số đó nhất.</p>
+
+                <div className="flex bg-gray-800 rounded-lg p-1 mb-4 border border-gray-700">
+                    <button
+                        onClick={() => setAlgorithmType('co-occurrence')}
+                        className={`flex-1 py-1.5 text-sm font-semibold rounded-md transition-all ${algorithmType === 'co-occurrence' ? 'bg-indigo-600 text-white shadow-md cursor-default' : 'text-gray-400 hover:text-gray-200'}`}
+                    >
+                        Cơ Bản (Mặc định)
+                    </button>
+                    <button
+                        onClick={() => setAlgorithmType('4-layer')}
+                        className={`flex-1 py-1.5 text-sm font-semibold rounded-md transition-all ${algorithmType === '4-layer' ? 'bg-purple-600 text-white shadow-md cursor-default' : 'text-gray-400 hover:text-gray-200'}`}
+                    >
+                        4 Lớp (Nâng cao)
+                    </button>
+                </div>
+
+                <p className="text-gray-400 text-sm mb-6 min-h-[40px]">
+                    {algorithmType === 'co-occurrence'
+                        ? `Nhập 1 số bạn thích. Hệ thống sẽ phân tích toàn bộ lịch sử ${data.length} kỳ quay để tìm ra 5 số thường xuất hiện cùng Số đó nhất.`
+                        : `Thuật toán quét 1.000.000 bộ số ngẫu nhiên qua 4 lớp lọc (Tổng, Chẵn Lẻ, Khoảng Cách, Lịch Sử) kết hợp với số của bạn.`
+                    }
+                </p>
 
                 <div className="flex gap-3 mb-4">
                     <input
@@ -34,8 +55,8 @@ export default function PredictModal({
                         placeholder="Nhập 1 số (vd: 05)"
                         className="flex-1 min-w-0 w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-mono text-base md:text-lg text-center"
                     />
-                    <button onClick={onPredict} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg transition-colors flex items-center gap-2">
-                        Tìm
+                    <button onClick={onPredict} disabled={isPredicting} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-bold shadow-lg transition-colors flex items-center justify-center gap-2 min-w-[90px]">
+                        {isPredicting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Tìm'}
                     </button>
                 </div>
 
