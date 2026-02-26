@@ -1,4 +1,4 @@
-import { PieChart, Pie, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { PieChart, Pie, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
 import { PieChart as PieChartIcon } from 'lucide-react';
 import { CHART_COLORS } from '../lib/constants';
 
@@ -31,6 +31,12 @@ export default function EvenOddPie({ data }) {
                             ))}
                         </Pie>
                         <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '10px' }} itemStyle={{ color: '#fff' }} />
+                        <Legend
+                            layout="vertical"
+                            verticalAlign="middle"
+                            align="right"
+                            wrapperStyle={{ fontSize: '12px', color: '#9ca3af' }}
+                        />
                     </PieChart>
                 </ResponsiveContainer>
             </div>
