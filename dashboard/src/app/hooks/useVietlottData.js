@@ -18,9 +18,10 @@ export function useVietlottData(activeTab) {
         { revalidateOnFocus: false, dedupingInterval: 300000 }
     );
 
-    // Last updated from GitHub
+    // Last updated from GitHub (repo uses power645.jsonl for Mega645)
+    const ghFileName = activeTab === 'Mega645' ? 'power645' : 'power655';
     const { data: commits } = useSWR(
-        `https://api.github.com/repos/vietvudanh/vietlott-data/commits?path=data/${activeTab.toLowerCase()}.jsonl&page=1&per_page=1`,
+        `https://api.github.com/repos/vietvudanh/vietlott-data/commits?path=data/${ghFileName}.jsonl&page=1&per_page=1`,
         fetcher,
         { revalidateOnFocus: false, dedupingInterval: 600000 } // 10 min cache
     );
