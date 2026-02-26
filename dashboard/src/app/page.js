@@ -24,6 +24,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // View All States
+  const [viewAllModal, setViewAllModal] = useState({ open: false, title: '', type: null });
+
   // Prediction State
   const [predictModalOpen, setPredictModalOpen] = useState(false);
   const [inputNumber, setInputNumber] = useState('');
@@ -127,9 +130,12 @@ export default function Dashboard() {
     const formatted = Object.keys(counts).map(key => ({
       name: key,
       tần_suất: counts[key]
-    })).sort((a, b) => b.tần_suất - a.tần_suất).slice(0, 15); // Top 15 frequent
+    })).sort((a, b) => b.tần_suất - a.tần_suất);
 
-    return formatted;
+    return {
+      top15: formatted.slice(0, 15),
+      full: formatted
+    };
   }, [data, activeTab]);
 
   // Compute Frequency of Pairs and Trios
@@ -169,17 +175,20 @@ export default function Dashboard() {
       }
     });
 
-    const formattedPairs = Object.keys(pairCounts)
+    const sortedPairs = Object.keys(pairCounts)
       .map(key => ({ name: key, tần_suất: pairCounts[key] }))
-      .sort((a, b) => b.tần_suất - a.tần_suất)
-      .slice(0, 15); // Top 15 frequent pairs
+      .sort((a, b) => b.tần_suất - a.tần_suất);
 
-    const formattedTrios = Object.keys(trioCounts)
+    const sortedTrios = Object.keys(trioCounts)
       .map(key => ({ name: key, tần_suất: trioCounts[key] }))
-      .sort((a, b) => b.tần_suất - a.tần_suất)
-      .slice(0, 15); // Top 15 frequent trios
+      .sort((a, b) => b.tần_suất - a.tần_suất);
 
-    return { pairData: formattedPairs, trioData: formattedTrios };
+    return {
+      pairData: sortedPairs.slice(0, 15),
+      trioData: sortedTrios.slice(0, 15),
+      pairDataFull: sortedPairs,
+      trioDataFull: sortedTrios
+    };
   }, [data]);
 
   const latestDraw = data && data.length > 0 ? data[0] : null;
@@ -333,14 +342,22 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
               {/* Left Col: Chart 1 */}
-              <div className="bg-gray-900/40 rounded-3xl p-6 border border-gray-800 shadow-xl">
-                <div className="flex items-center gap-2 text-gray-300 font-semibold mb-6">
-                  <TrendingUp className="w-5 h-5 text-teal-400" />
-                  <h3>Top 15 Số Từng Xuất Hiện Nhiều Nhất</h3>
+              <div className="bg-gray-900/40 rounded-3xl p-6 border border-gray-800 shadow-xl flex flex-col">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2 text-gray-300 font-semibold">
+                    <TrendingUp className="w-5 h-5 text-teal-400" />
+                    <h3>Top 15 Số Từng Xuất Hiện Nhiều Nhất</h3>
+                  </div>
+                  <button
+                    onClick={() => setViewAllModal({ open: true, title: 'Tất Cả Tần Suất Các Số', type: 'frequency' })}
+                    className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-400/10 px-3 py-1.5 rounded-lg transition-colors border border-emerald-400/20"
+                  >
+                    Xem tất cả
+                  </button>
                 </div>
                 <div className="h-72 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={frequencyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <BarChart data={frequencyData.top15} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
                       <XAxis dataKey="name" stroke="#888" tickLine={false} axisLine={false} />
                       <YAxis stroke="#888" tickLine={false} axisLine={false} />
@@ -350,7 +367,7 @@ export default function Dashboard() {
                         itemStyle={{ color: '#10b981' }}
                       />
                       <Bar dataKey="tần_suất" radius={[4, 4, 0, 0]}>
-                        {frequencyData.map((entry, index) => (
+                        {frequencyData.top15.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={index < 3 ? '#10b981' : '#0d9488'} />
                         ))}
                       </Bar>
@@ -404,10 +421,18 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
               {/* Left Col: Chart Pairs */}
-              <div className="bg-gray-900/40 rounded-3xl p-6 border border-gray-800 shadow-xl">
-                <div className="flex items-center gap-2 text-gray-300 font-semibold mb-6">
-                  <TrendingUp className="w-5 h-5 text-indigo-400" />
-                  <h3>Top 15 Cặp 2 Số Hay Xuất Hiện Cùng Nhau</h3>
+              <div className="bg-gray-900/40 rounded-3xl p-6 border border-gray-800 shadow-xl flex flex-col">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2 text-gray-300 font-semibold">
+                    <TrendingUp className="w-5 h-5 text-indigo-400" />
+                    <h3>Top 15 Cặp 2 Số Hay Xuất Hiện Cùng Nhau</h3>
+                  </div>
+                  <button
+                    onClick={() => setViewAllModal({ open: true, title: 'Tất Cả Cặp 2 Số', type: 'pairs' })}
+                    className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 hover:bg-indigo-400/10 px-3 py-1.5 rounded-lg transition-colors border border-indigo-400/20"
+                  >
+                    Xem tất cả
+                  </button>
                 </div>
                 <div className="h-72 w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -431,10 +456,18 @@ export default function Dashboard() {
               </div>
 
               {/* Right Col: Chart Trios */}
-              <div className="bg-gray-900/40 rounded-3xl p-6 border border-gray-800 shadow-xl">
-                <div className="flex items-center gap-2 text-gray-300 font-semibold mb-6">
-                  <TrendingUp className="w-5 h-5 text-rose-400" />
-                  <h3>Top 15 Bộ 3 Số Hay Xuất Hiện Cùng Nhau</h3>
+              <div className="bg-gray-900/40 rounded-3xl p-6 border border-gray-800 shadow-xl flex flex-col">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2 text-gray-300 font-semibold">
+                    <TrendingUp className="w-5 h-5 text-rose-400" />
+                    <h3>Top 15 Bộ 3 Số Hay Xuất Hiện Cùng Nhau</h3>
+                  </div>
+                  <button
+                    onClick={() => setViewAllModal({ open: true, title: 'Tất Cả Bộ 3 Số', type: 'trios' })}
+                    className="text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-400/10 px-3 py-1.5 rounded-lg transition-colors border border-rose-400/20"
+                  >
+                    Xem tất cả
+                  </button>
                 </div>
                 <div className="h-72 w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -457,6 +490,62 @@ export default function Dashboard() {
                 </div>
               </div>
 
+            </div>
+          </div>
+        )}
+
+        {/* View All Modal */}
+        {viewAllModal.open && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-gray-900 border border-gray-700 p-0 rounded-2xl shadow-2xl w-full max-w-2xl relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+
+              <div className="p-6 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-gray-900 z-10 rounded-t-2xl">
+                <h2 className="text-xl font-bold text-gray-100 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-gray-400" />
+                  {viewAllModal.title}
+                </h2>
+                <button
+                  onClick={() => setViewAllModal({ open: false, title: '', type: null })}
+                  className="text-gray-400 hover:text-white transition-colors p-2 bg-gray-800 hover:bg-gray-700 rounded-full"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs text-gray-500 uppercase bg-[#161B22] rounded-lg">
+                    <tr>
+                      <th className="px-4 py-3 rounded-tl-lg rounded-bl-lg">
+                        {viewAllModal.type === 'frequency' ? 'Số' : 'Bộ Số'}
+                      </th>
+                      <th className="px-4 py-3 text-right rounded-tr-lg rounded-br-lg">Số Lần Xuất Hiện</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(viewAllModal.type === 'frequency' ? frequencyData.full :
+                      viewAllModal.type === 'pairs' ? pairDataFull :
+                        trioDataFull)?.map((item, idx) => (
+                          <tr key={idx} className="border-b border-gray-800/40 hover:bg-gray-800/40 transition-colors">
+                            <td className="px-4 py-3 text-gray-300 font-medium whitespace-nowrap">
+                              {viewAllModal.type === 'frequency' ? (
+                                <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 text-sm font-bold border border-gray-700">
+                                  {item.name}
+                                </span>
+                              ) : (
+                                <span className="font-mono bg-gray-800 px-3 py-1 rounded-md border border-gray-700">
+                                  {item.name}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-right font-bold text-emerald-400">
+                              {item.tần_suất}
+                            </td>
+                          </tr>
+                        ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
