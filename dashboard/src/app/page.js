@@ -518,10 +518,10 @@ export default function Dashboard() {
                 <table className="w-full text-sm text-left">
                   <thead className="text-xs text-gray-500 uppercase bg-[#161B22] rounded-lg">
                     <tr>
-                      <th className="px-4 py-3 rounded-tl-lg rounded-bl-lg w-1/3">
+                      <th className="px-4 py-3 rounded-tl-lg rounded-bl-lg w-20 text-gray-300 font-semibold tracking-wide">
                         {viewAllModal.type === 'frequency' ? 'Số' : 'Bộ Số'}
                       </th>
-                      <th className="px-4 py-3 px-8 w-2/3">Tần Suất / So Sánh</th>
+                      <th className="px-4 py-3 text-gray-300 font-semibold tracking-wide">Tần Suất / So Sánh</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -533,23 +533,27 @@ export default function Dashboard() {
 
                       return listData.map((item, idx) => (
                         <tr key={idx} className="border-b border-gray-800/40 hover:bg-gray-800/40 transition-colors">
-                          <td className="px-4 py-3 text-gray-300 font-medium whitespace-nowrap">
+                          <td className="px-4 py-3 w-20 whitespace-nowrap">
                             {viewAllModal.type === 'frequency' ? (
-                              <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 text-sm font-bold border border-gray-700">
+                              <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 text-sm font-bold border border-gray-700 text-white shadow-sm">
                                 {item.name}
                               </span>
                             ) : (
-                              <span className="font-mono bg-gray-800 px-3 py-1 rounded-md border border-gray-700">
+                              <span className="font-mono bg-gray-800 px-3 py-1 rounded-md border border-gray-700 text-white shadow-sm">
                                 {item.name}
                               </span>
                             )}
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex items-center gap-3">
-                              <span className="font-bold text-emerald-400 w-10 text-right">{item.tần_suất}</span>
-                              <div className="flex-1 h-2.5 bg-gray-800 rounded-full overflow-hidden">
+                            <div className="flex items-center gap-4">
+                              <span className="font-bold text-emerald-400 w-8 text-right text-base">{item.tần_suất}</span>
+                              <div className="flex-1 max-w-md h-3 bg-gray-800 rounded-full overflow-hidden shadow-inner">
                                 <div
-                                  className="h-full bg-gradient-to-r from-emerald-600 to-teal-400 rounded-full"
+                                  className={`h-full rounded-full transition-all duration-500 ${idx < 5 ?
+                                    (viewAllModal.type === 'pairs' ? 'bg-gradient-to-r from-indigo-500 to-purple-400 shadow-[0_0_8px_rgba(129,140,248,0.6)]' :
+                                      viewAllModal.type === 'trios' ? 'bg-gradient-to-r from-rose-500 to-pink-400 shadow-[0_0_8px_rgba(244,63,94,0.6)]' :
+                                        'bg-gradient-to-r from-emerald-400 to-teal-300 shadow-[0_0_8px_rgba(52,211,153,0.6)]')
+                                    : 'bg-gradient-to-r from-emerald-700/60 to-teal-600/60'}`}
                                   style={{ width: `${Math.max((item.tần_suất / maxFreq) * 100, 2)}%` }}
                                 ></div>
                               </div>
