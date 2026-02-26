@@ -75,6 +75,56 @@ export default function Dashboard() {
     return formatted;
   }, [data, activeTab]);
 
+  // Compute Frequency of Pairs and Trios
+  const { pairData, trioData } = useMemo(() => {
+    if (!data || data.length === 0) return { pairData: [], trioData: [] };
+
+    const pairCounts = {};
+    const trioCounts = {};
+
+    data.forEach(row => {
+      // Extract numbers for this drawn
+      const numbers = [];
+      for (let i = 1; i <= 6; i++) {
+        if (row[`Số ${i}`]) numbers.push(row[`Số ${i}`]);
+      }
+      // Sort numbers to ensure unique pair/trio keys (e.g., "01-02" instead of "02-01")
+      numbers.sort((a, b) => parseInt(a) - parseInt(b));
+
+      const n = numbers.length;
+
+      // Calculate Pairs
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          const pairKey = `${numbers[i]} - ${numbers[j]}`;
+          pairCounts[pairKey] = (pairCounts[pairKey] || 0) + 1;
+        }
+      }
+
+      // Calculate Trios
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          for (let k = j + 1; k < n; k++) {
+            const trioKey = `${numbers[i]} - ${numbers[j]} - ${numbers[k]}`;
+            trioCounts[trioKey] = (trioCounts[trioKey] || 0) + 1;
+          }
+        }
+      }
+    });
+
+    const formattedPairs = Object.keys(pairCounts)
+      .map(key => ({ name: key, tần_suất: pairCounts[key] }))
+      .sort((a, b) => b.tần_suất - a.tần_suất)
+      .slice(0, 15); // Top 15 frequent pairs
+
+    const formattedTrios = Object.keys(trioCounts)
+      .map(key => ({ name: key, tần_suất: trioCounts[key] }))
+      .sort((a, b) => b.tần_suất - a.tần_suất)
+      .slice(0, 15); // Top 15 frequent trios
+
+    return { pairData: formattedPairs, trioData: formattedTrios };
+  }, [data]);
+
   const latestDraw = data && data.length > 0 ? data[0] : null;
 
   return (
@@ -148,14 +198,14 @@ export default function Dashboard() {
               </div>
             </section>
 
-            {/* Dashboard Grid */}
+            {/* Dashboard Grid 1 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-              {/* Left Col: Chart */}
+              {/* Left Col: Chart 1 */}
               <div className="bg-gray-900/40 rounded-3xl p-6 border border-gray-800 shadow-xl">
                 <div className="flex items-center gap-2 text-gray-300 font-semibold mb-6">
                   <TrendingUp className="w-5 h-5 text-teal-400" />
-                  <h3>Top 15 Số Xuất Hiện Nhiều Nhất</h3>
+                  <h3>Top 15 Số Từng Xuất Hiện Nhiều Nhất</h3>
                 </div>
                 <div className="h-72 w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -179,7 +229,7 @@ export default function Dashboard() {
               </div>
 
               {/* Right Col: History Table */}
-              <div className="bg-gray-900/40 rounded-3xl p-6 border border-gray-800 shadow-xl flex flex-col h-96">
+              <div className="bg-gray-900/40 rounded-3xl p-6 border border-gray-800 shadow-xl flex flex-col h-96 mt-2 relative overflow-hidden">
                 <h3 className="text-gray-300 font-semibold mb-6">Lịch Sử Mở Thưởng (100 kỳ gần nhất)</h3>
                 <div className="overflow-auto flex-1 pr-2 custom-scrollbar">
                   <table className="w-full text-sm text-left">
@@ -214,6 +264,65 @@ export default function Dashboard() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Dashboard Grid 2 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+              {/* Left Col: Chart Pairs */}
+              <div className="bg-gray-900/40 rounded-3xl p-6 border border-gray-800 shadow-xl">
+                <div className="flex items-center gap-2 text-gray-300 font-semibold mb-6">
+                  <TrendingUp className="w-5 h-5 text-indigo-400" />
+                  <h3>Top 15 Cặp 2 Số Hay Xuất Hiện Cùng Nhau</h3>
+                </div>
+                <div className="h-72 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={pairData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#333" horizontal={false} />
+                      <XAxis type="number" stroke="#888" tickLine={false} axisLine={false} />
+                      <YAxis dataKey="name" type="category" stroke="#888" tickLine={false} axisLine={false} width={80} />
+                      <Tooltip
+                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                        contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)' }}
+                        itemStyle={{ color: '#818cf8' }}
+                      />
+                      <Bar dataKey="tần_suất" radius={[0, 4, 4, 0]}>
+                        {pairData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={index < 3 ? '#818cf8' : '#6366f1'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Right Col: Chart Trios */}
+              <div className="bg-gray-900/40 rounded-3xl p-6 border border-gray-800 shadow-xl">
+                <div className="flex items-center gap-2 text-gray-300 font-semibold mb-6">
+                  <TrendingUp className="w-5 h-5 text-rose-400" />
+                  <h3>Top 15 Bộ 3 Số Hay Xuất Hiện Cùng Nhau</h3>
+                </div>
+                <div className="h-72 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={trioData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#333" horizontal={false} />
+                      <XAxis type="number" stroke="#888" tickLine={false} axisLine={false} />
+                      <YAxis dataKey="name" type="category" stroke="#888" tickLine={false} axisLine={false} width={120} />
+                      <Tooltip
+                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                        contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)' }}
+                        itemStyle={{ color: '#fb7185' }}
+                      />
+                      <Bar dataKey="tần_suất" radius={[0, 4, 4, 0]}>
+                        {trioData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={index < 3 ? '#fb7185' : '#f43f5e'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
 
