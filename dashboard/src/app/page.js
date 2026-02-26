@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
-import { Loader2, TrendingUp, Calendar, AlertCircle, Wand2, X } from 'lucide-react';
+import { Loader2, TrendingUp, Calendar, AlertCircle, Wand2, X, Info, Heart, Rocket, Code2 } from 'lucide-react';
 
 const Ball = ({ num, isSpecial }) => {
   if (!num) return null;
@@ -23,6 +23,10 @@ export default function Dashboard() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // App Info States
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   // View All States
   const [viewAllModal, setViewAllModal] = useState({ open: false, title: '', type: null });
@@ -95,6 +99,25 @@ export default function Dashboard() {
         const result = await res.json();
         if (result.success) {
           setData(result.data);
+
+          // Fetch last updated time from github (crawler job)
+          try {
+            const githubRes = await fetch(`https://api.github.com/repos/vietvudanh/vietlott-data/commits?path=data/${activeTab.toLowerCase()}.jsonl&page=1&per_page=1`);
+            if (githubRes.ok) {
+              const commits = await githubRes.json();
+              if (commits && commits.length > 0) {
+                const date = new Date(commits[0].commit.author.date);
+                setLastUpdated(date.toLocaleString('vi-VN', {
+                  timeZone: 'Asia/Ho_Chi_Minh',
+                  hour: '2-digit', minute: '2-digit', second: '2-digit',
+                  day: '2-digit', month: '2-digit', year: 'numeric'
+                }));
+              }
+            }
+          } catch (e) {
+            console.error('Failed to fetch github last updated', e);
+          }
+
         } else {
           setError(result.error || 'Failed to fetch data');
         }
@@ -202,10 +225,15 @@ export default function Dashboard() {
         {/* Header */}
         <header className="flex flex-col md:flex-row items-center justify-between border-b border-gray-800 pb-4 sticky top-0 z-50 bg-[#0E1217]/95 backdrop-blur-xl pt-4 shadow-2xl rounded-b-2xl px-4 -mx-4 mb-4">
           <div>
-            <h1 className="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-emerald-600">
+            <h1 className="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-emerald-600 flex items-center gap-3">
               Vietlott Analytics
             </h1>
             <p className="text-gray-400 mt-2 text-sm">Real-time statistics & drawn frequency dashboard</p>
+            {lastUpdated && (
+              <p className="text-emerald-400/80 mt-1.5 text-xs font-mono bg-emerald-900/20 inline-block px-2 py-0.5 rounded border border-emerald-800/30">
+                ⏱ Dữ liệu đồng bộ lần cuối (GitHub): {lastUpdated}
+              </p>
+            )}
           </div>
 
           <div className="mt-6 md:mt-0 flex p-1 bg-gray-900 rounded-xl border border-gray-800 shadow-inner">
@@ -223,7 +251,14 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <div className="mt-4 md:mt-0">
+          <div className="mt-4 md:mt-0 flex items-center justify-end gap-3 flex-wrap">
+            <button
+              onClick={() => setInfoModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-xl font-semibold transition-all shadow-lg border border-gray-700"
+            >
+              <Info className="w-4 h-4" />
+              <span className="hidden sm:inline">Giới Thiệu</span>
+            </button>
             <button
               onClick={() => {
                 setPredictModalOpen(true);
@@ -569,6 +604,83 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Info Modal */}
+      {infoModalOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-xl relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-gray-900 z-10 rounded-t-2xl">
+              <h2 className="text-xl font-bold text-gray-100 flex items-center gap-2">
+                <Code2 className="w-5 h-5 text-teal-400" />
+                Về Dự Án Vietlott Analytics
+              </h2>
+              <button
+                onClick={() => setInfoModalOpen(false)}
+                className="text-gray-400 hover:text-white transition-colors p-2 bg-gray-800 hover:bg-gray-700 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+
+              {/* Giới thiệu */}
+              <section>
+                <h3 className="text-sm font-bold text-teal-400 mb-2 uppercase tracking-wider flex items-center gap-2">
+                  <Info className="w-4 h-4" /> Giới Thiệu
+                </h3>
+                <p className="text-slate-300 text-sm leading-relaxed">
+                  Hệ thống phân tích tần suất xổ số Vietlott (Mega 6/45 & Power 6/55) dựa trên toàn bộ lịch sử các kỳ quay thực tế. Dữ liệu được trích xuất (crawl) tự động hàng ngày thông qua Github Actions. Giúp bạn theo dõi số nóng, dự đoán xác suất ra của các bộ số.
+                </p>
+              </section>
+
+              {/* Lịch Sử Cập Nhật (Release Notes) */}
+              <section className="border-t border-gray-800 pt-5">
+                <h3 className="text-sm font-bold text-indigo-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+                  <Rocket className="w-4 h-4" /> Bản Cập Nhật
+                </h3>
+                <div className="text-xs text-slate-400 space-y-2 font-mono leading-relaxed">
+                  <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-26</span> Thêm Modal Xem Tất Cả (full list) kèm Progress Bar trực quan cực nét. Cập nhật Info Modal.</p>
+                  <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-26</span> Thêm thuật toán Dự Đoán Cặp Số loại trừ các cặp chưa từng xuất hiện. Sticky Header.</p>
+                  <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-25</span> Hoàn thiện kiến trúc crawl data Github tự động & Sync Google Sheets.</p>
+                </div>
+              </section>
+
+              {/* Ủng Hộ (Donate) */}
+              <section className="border-t border-gray-800 pt-5">
+                <div className="bg-gradient-to-br from-pink-900/30 to-purple-900/30 p-4 rounded-xl border border-pink-700/50 shadow-inner">
+                  <h3 className="text-base font-bold text-pink-400 mb-1 flex items-center gap-2">
+                    <Heart className="w-4 h-4 fill-pink-400" /> Ủng Hộ (Donate)
+                  </h3>
+                  <p className="text-slate-300 text-xs mb-4">
+                    Nếu tool giúp bạn tính toán nhàn hơn hoặc may mắn trúng giải, xin ly cafe nha! ❤️
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 items-center justify-start">
+                    <div className="bg-white p-1.5 rounded-xl shadow-lg shrink-0 w-24 h-24 flex items-center justify-center">
+                      <img
+                        src="https://vietlott.vn/images/Logo-Vietlott.png" // Placeholder, in loto we used /donation-qr.jpg
+                        alt="QR Code"
+                        className="max-w-full max-h-full object-contain grayscale opacity-20"
+                      />
+                      {/* Note: User told me "tham khảo mục ủng hộ của project loto", in loto it used /donation-qr.jpg but we don't have it here, I will leave the number visible */}
+                    </div>
+                    <div className="text-sm space-y-2 text-left bg-black/40 p-3 rounded-lg border border-gray-700/50 flex-1 w-full">
+                      <p className="flex justify-between items-center"><strong className="text-pink-400">MoMo:</strong> <span className="font-mono text-white bg-gray-800 px-2 rounded">0363839007</span></p>
+                      <p className="flex justify-between items-center"><strong className="text-blue-400">Bank (ACB):</strong> <span className="font-mono text-white bg-gray-800 px-2 rounded">12342467</span></p>
+                      <div className="text-xs text-slate-400 pt-1 border-t border-gray-800">
+                        Chủ TK: Đặng Ngọc Chính<br />
+                        <span className="italic opacity-80">* Nội dung: Vietlott + Tên bạn</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
