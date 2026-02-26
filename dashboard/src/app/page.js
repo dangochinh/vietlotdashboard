@@ -202,11 +202,11 @@ export default function Dashboard() {
 
     const sortedPairs = Object.keys(pairCounts)
       .map(key => ({ name: key, tần_suất: pairCounts[key] }))
-      .sort((a, b) => b.tần_suất - a.tần_suất);
+      .sort((a, b) => b.tần_suất - a.tần_suất || a.name.localeCompare(b.name));
 
     const sortedTrios = Object.keys(trioCounts)
       .map(key => ({ name: key, tần_suất: trioCounts[key] }))
-      .sort((a, b) => b.tần_suất - a.tần_suất);
+      .sort((a, b) => b.tần_suất - a.tần_suất || a.name.localeCompare(b.name));
 
     return {
       pairData: sortedPairs.slice(0, 15),
