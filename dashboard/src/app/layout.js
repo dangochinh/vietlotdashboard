@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Vietlott Dashboard - Thay đổi cuộc đời",
+  title: "Vietlott Dashboard - Thay phân đổi thận",
   description: "Trang tổng hợp thống kê và phân tích tần suất xổ số Vietlott tự động cập nhật.",
   icons: {
     icon: "https://vietlott.vn/images/Logo-Vietlott.png",

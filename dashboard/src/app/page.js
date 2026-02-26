@@ -1,9 +1,10 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+  PieChart, Pie, ScatterChart, Scatter, ZAxis, Legend
 } from 'recharts';
-import { Loader2, TrendingUp, Calendar, AlertCircle, Wand2, X, Info, Heart, Rocket, Code2, Send, Timer } from 'lucide-react';
+import { Loader2, TrendingUp, Calendar, AlertCircle, Wand2, X, Info, Heart, Rocket, Code2, Send, Timer, PieChart as PieChartIcon, Activity } from 'lucide-react';
 
 const Ball = ({ num, isSpecial }) => {
   if (!num) return null;
@@ -271,6 +272,104 @@ export default function Dashboard() {
       pairDataFull: sortedPairs,
       trioDataFull: sortedTrios
     };
+  }, [data]);
+
+  // Compute Cold Numbers
+  const coldNumbersData = useMemo(() => {
+    if (!data || data.length === 0) return { top15: [], full: [] };
+    const maxNum = activeTab === 'Mega645' ? 45 : 55;
+    const lastSeen = {};
+
+    for (let i = 1; i <= maxNum; i++) {
+      lastSeen[i.toString().padStart(2, '0')] = -1; // -1 means never seen
+    }
+
+    // data[0] is most recent. We scan until we find each number
+    for (let drawIdx = 0; drawIdx < data.length; drawIdx++) {
+      const row = data[drawIdx];
+      for (let i = 1; i <= 6; i++) {
+        const num = row[`Số ${i}`];
+        if (num && lastSeen[num] === -1) {
+          lastSeen[num] = drawIdx; // The number of draws ago it was seen
+        }
+      }
+      if (activeTab === 'Power655' && row['Số Đặc Biệt']) {
+        const num = row['Số Đặc Biệt'];
+        if (num && lastSeen[num] === -1) {
+          lastSeen[num] = drawIdx;
+        }
+      }
+    }
+
+    // If a number was never seen in the dataset, assign it the max dataset length
+    Object.keys(lastSeen).forEach(key => {
+      if (lastSeen[key] === -1) lastSeen[key] = data.length;
+    });
+
+    const formatted = Object.keys(lastSeen).map(key => ({
+      name: key,
+      kỳ_chưa_về: lastSeen[key]
+    })).sort((a, b) => b.kỳ_chưa_về - a.kỳ_chưa_về); // Sort descending (coldest first)
+
+    return {
+      top15: formatted.slice(0, 15),
+      full: formatted.sort((a, b) => a.kỳ_chưa_về - b.kỳ_chưa_về) // Sort ascending for Modal 
+    };
+  }, [data, activeTab]);
+
+  // Compute Even/Odd Ratio
+  const evenOddData = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    const counts = {
+      '6 Chẵn - 0 Lẻ': 0,
+      '5 Chẵn - 1 Lẻ': 0,
+      '4 Chẵn - 2 Lẻ': 0,
+      '3 Chẵn - 3 Lẻ': 0,
+      '2 Chẵn - 4 Lẻ': 0,
+      '1 Chẵn - 5 Lẻ': 0,
+      '0 Chẵn - 6 Lẻ': 0,
+    };
+
+    data.forEach(row => {
+      let evens = 0;
+      let odds = 0;
+      for (let i = 1; i <= 6; i++) {
+        const num = parseInt(row[`Số ${i}`]);
+        if (!isNaN(num)) {
+          if (num % 2 === 0) evens++;
+          else odds++;
+        }
+      }
+      if (evens + odds === 6) {
+        counts[`${evens} Chẵn - ${odds} Lẻ`] += 1;
+      }
+    });
+
+    // Format for Recharts Pie
+    return Object.keys(counts).filter(k => counts[k] > 0).map(k => ({
+      name: k,
+      value: counts[k]
+    }));
+  }, [data]);
+
+  // Compute Sums Scatter Plot
+  const sumData = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    // Only take the last 100 draws for visual clarity on scatter plot so it isn't too crowded
+    const recentData = data.slice(0, 100).reverse(); // Reverse so x-axis is timeline
+
+    return recentData.map((row, index) => {
+      let sum = 0;
+      for (let i = 1; i <= 6; i++) {
+        const val = parseInt(row[`Số ${i}`]);
+        if (!isNaN(val)) sum += val;
+      }
+      return {
+        drawId: row['Kỳ QSMT'] || index,
+        index: index + 1,
+        sum: sum
+      };
+    });
   }, [data]);
 
   const latestDraw = data && data.length > 0 ? data[0] : null;
@@ -656,160 +755,289 @@ export default function Dashboard() {
                   </ResponsiveContainer>
                 </div>
               </div>
-
             </div>
-          </div>
-        )}
 
-        {/* View All Modal */}
-        {viewAllModal.open && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-gray-900 border border-gray-700 p-0 rounded-2xl shadow-2xl w-full max-w-2xl relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+            {/* Dashboard Grid 2 - New Charts */}
+            {!loading && !error && data.length > 0 && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 mt-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-              <div className="p-6 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-gray-900 z-10 rounded-t-2xl">
-                <h2 className="text-xl font-bold text-gray-100 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-gray-400" />
-                  {viewAllModal.title}
-                </h2>
-                <button
-                  onClick={() => setViewAllModal({ open: false, title: '', type: null })}
-                  className="text-gray-400 hover:text-white transition-colors p-2 bg-gray-800 hover:bg-gray-700 rounded-full"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                  {/* Cold Numbers Chart */}
+                  <div className="bg-gray-900/40 rounded-3xl p-6 border border-gray-800 shadow-xl flex flex-col">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-2 text-gray-300 font-semibold">
+                        <TrendingUp className="w-5 h-5 text-blue-400 rotate-180" />
+                        <h3>Top 15 Số &quot;Khan&quot; (Chưa Về Lâu Nhất)</h3>
+                      </div>
+                      <button
+                        onClick={() => setViewAllModal({ open: true, title: 'Tất Cả Số Khan', type: 'cold' })}
+                        className="text-xs font-semibold text-blue-400 hover:text-blue-300 hover:bg-blue-400/10 px-3 py-1.5 rounded-lg transition-colors border border-blue-400/20"
+                      >
+                        Xem tất cả
+                      </button>
+                    </div>
+                    <div className="h-72 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={coldNumbersData.top15} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                          <XAxis dataKey="name" stroke="#888" tickLine={false} axisLine={false} />
+                          <YAxis stroke="#888" tickLine={false} axisLine={false} />
+                          <Tooltip
+                            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                            contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)' }}
+                            itemStyle={{ color: '#60a5fa' }}
+                            formatter={(val) => [val + ' kỳ', 'Số kỳ chưa ra']}
+                          />
+                          <Bar dataKey="kỳ_chưa_về" radius={[4, 4, 0, 0]}>
+                            {coldNumbersData.top15.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={index < 3 ? '#3b82f6' : '#2563eb'} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                  {/* Even/Odd Pie Chart */}
+                  <div className="bg-gray-900/40 rounded-3xl p-6 border border-gray-800 shadow-xl flex flex-col">
+                    <div className="flex items-center mb-6 gap-2 text-gray-300 font-semibold">
+                      <PieChartIcon className="w-5 h-5 text-orange-400" />
+                      <h3>Tỷ Lệ Chẵn Lẻ (6 Số Chính)</h3>
+                    </div>
+                    <div className="h-72 w-full flex items-center justify-center">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={evenOddData}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={90}
+                            paddingAngle={3}
+                            label={({ name, percent }) => `${name} (${(percent * 100).toFixed(1)}%)`}
+                            labelLine={false}
+                          >
+                            {evenOddData.map((entry, index) => {
+                              const colors = ['#f97316', '#eab308', '#84cc16', '#22c55e', '#06b6d4', '#3b82f6', '#8b5cf6'];
+                              return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+                            })}
+                          </Pie>
+                          <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '10px' }} itemStyle={{ color: '#fff' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Sum Scatter Plot Layer */}
+                <div className="bg-gray-900/40 rounded-3xl p-6 border border-gray-800 shadow-xl flex flex-col w-full">
+                  <div className="flex items-center mb-2 gap-2 text-gray-300 font-semibold">
+                    <Activity className="w-5 h-5 text-fuchsia-400" />
+                    <h3>Phân Tán Tổng Điểm 6 Số (100 Kỳ Gần Nhất)</h3>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-6 font-medium">Trung bình kỳ vọng Mega 6/45: 138, Power 6/55: 168</p>
+                  <div className="h-64 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ScatterChart margin={{ top: 10, right: 20, bottom: 20, left: -10 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                        <XAxis type="number" dataKey="index" name="Kỳ" stroke="#888" tick={false} axisLine={false} label={{ value: '100 kỳ quay lại đây', position: 'insideBottom', offset: -10, fill: '#666' }} />
+                        <YAxis type="number" dataKey="sum" name="Tổng Điểm" stroke="#888" axisLine={false} tickLine={false} />
+                        <ZAxis type="number" range={[40, 40]} />
+                        <Tooltip
+                          cursor={{ strokeDasharray: '3 3' }}
+                          contentStyle={{ backgroundColor: '#1f2937', border: 'none', borderRadius: '12px' }}
+                          formatter={(value, name) => [value, name === 'sum' ? 'Tổng 6 số' : 'Kỳ']}
+                          labelFormatter={(label, payload) => payload?.[0]?.payload?.drawId}
+                        />
+                        <Scatter name="Tổng" data={sumData} fill="#c026d3" opacity={0.7} />
+                      </ScatterChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
               </div>
+            )}
 
-              <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
-                <table className="w-full text-sm text-left">
-                  <thead className="text-xs text-slate-200 uppercase bg-slate-800/80 rounded-lg shadow-sm">
-                    <tr>
-                      <th className="px-4 py-3 rounded-tl-lg rounded-bl-lg w-20 font-bold tracking-wider">
-                        {viewAllModal.type === 'frequency' ? 'Số' : 'Bộ Số'}
-                      </th>
-                      <th className="px-4 py-3 font-bold tracking-wider">Tần Suất / So Sánh</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(() => {
-                      const listData = viewAllModal.type === 'frequency' ? frequencyData.full :
-                        viewAllModal.type === 'pairs' ? pairDataFull :
-                          trioDataFull || [];
-                      const maxFreq = listData.length > 0 ? listData[0].tần_suất : 1;
+            {/* View All Modal */}
+            {viewAllModal.open && (
+              <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-gray-900 border border-gray-700 p-0 rounded-2xl shadow-2xl w-full max-w-2xl relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
 
-                      return listData.map((item, idx) => (
-                        <tr key={idx} className="border-b border-gray-800/40 hover:bg-gray-800/40 transition-colors">
-                          <td className="px-4 py-3 w-20 whitespace-nowrap">
-                            {viewAllModal.type === 'frequency' ? (
-                              <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 text-sm font-bold border border-gray-700 text-white shadow-sm">
-                                {item.name}
-                              </span>
-                            ) : (
-                              <span className="font-mono bg-gray-800 px-3 py-1 rounded-md border border-gray-700 text-white shadow-sm">
-                                {item.name}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-4">
-                              <span className="font-bold text-emerald-400 w-8 text-right text-base">{item.tần_suất}</span>
-                              <div className="flex-1 max-w-md h-3 bg-gray-800 rounded-full overflow-hidden shadow-inner">
-                                <div
-                                  className={`h-full rounded-full transition-all duration-500 ${idx < 5 ?
-                                    (viewAllModal.type === 'pairs' ? 'bg-gradient-to-r from-indigo-500 to-purple-400 shadow-[0_0_8px_rgba(129,140,248,0.6)]' :
-                                      viewAllModal.type === 'trios' ? 'bg-gradient-to-r from-rose-500 to-pink-400 shadow-[0_0_8px_rgba(244,63,94,0.6)]' :
-                                        'bg-gradient-to-r from-emerald-400 to-teal-300 shadow-[0_0_8px_rgba(52,211,153,0.6)]')
-                                    : 'bg-gradient-to-r from-emerald-700/60 to-teal-600/60'}`}
-                                  style={{ width: `${Math.max((item.tần_suất / maxFreq) * 100, 2)}%` }}
-                                ></div>
-                              </div>
-                            </div>
-                          </td>
+                  <div className="p-6 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-gray-900 z-10 rounded-t-2xl">
+                    <h2 className="text-xl font-bold text-gray-100 flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-gray-400" />
+                      {viewAllModal.title}
+                    </h2>
+                    <button
+                      onClick={() => setViewAllModal({ open: false, title: '', type: null })}
+                      className="text-gray-400 hover:text-white transition-colors p-2 bg-gray-800 hover:bg-gray-700 rounded-full"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-xs text-slate-200 uppercase bg-slate-800/80 rounded-lg shadow-sm">
+                        <tr>
+                          <th className="px-4 py-3 rounded-tl-lg rounded-bl-lg w-20 font-bold tracking-wider">
+                            {viewAllModal.type === 'frequency' || viewAllModal.type === 'cold' ? 'Số' : 'Bộ Số'}
+                          </th>
+                          <th className="px-4 py-3 font-bold tracking-wider">
+                            {viewAllModal.type === 'cold' ? 'Số kỳ chưa về' : 'Tần Suất / So Sánh'}
+                          </th>
                         </tr>
-                      ));
-                    })()}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody>
+                        {(() => {
+                          let listData = [];
+                          let maxFreq = 1;
+
+                          switch (viewAllModal.type) {
+                            case 'frequency':
+                              listData = frequencyData.full;
+                              maxFreq = listData[0]?.tần_suất || 1;
+                              break;
+                            case 'pairs':
+                              listData = pairDataFull;
+                              maxFreq = listData[0]?.tần_suất || 1;
+                              break;
+                            case 'trios':
+                              listData = trioDataFull;
+                              maxFreq = listData[0]?.tần_suất || 1;
+                              break;
+                            case 'cold':
+                              listData = coldNumbersData.full;
+                              // Find max 'kỳ chưa về'
+                              maxFreq = Math.max(...listData.map(d => d.kỳ_chưa_về));
+                              if (maxFreq === 0) maxFreq = 1;
+                              break;
+                          }
+
+                          return listData.map((item, idx) => (
+                            <tr key={idx} className="border-b border-gray-800/40 hover:bg-gray-800/40 transition-colors">
+                              <td className="px-4 py-3 w-20 whitespace-nowrap">
+                                {viewAllModal.type === 'frequency' || viewAllModal.type === 'cold' ? (
+                                  <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 text-sm font-bold border border-gray-700 text-white shadow-sm">
+                                    {item.name}
+                                  </span>
+                                ) : (
+                                  <span className="font-mono bg-gray-800 px-3 py-1 rounded-md border border-gray-700 text-white shadow-sm">
+                                    {item.name}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center gap-4">
+                                  <span className={`font-bold w-8 text-right text-base ${viewAllModal.type === 'cold' ? 'text-blue-400' : 'text-emerald-400'}`}>
+                                    {viewAllModal.type === 'cold' ? item.kỳ_chưa_về : item.tần_suất}
+                                  </span>
+                                  <div className="flex-1 max-w-md h-3 bg-gray-800 rounded-full overflow-hidden shadow-inner">
+                                    <div
+                                      className={`h-full rounded-full transition-all duration-500 ${viewAllModal.type === 'cold'
+                                        ? 'bg-gradient-to-r from-blue-600 to-cyan-400 shadow-[0_0_8px_rgba(56,189,248,0.6)]'
+                                        : (idx < 5
+                                          ? (viewAllModal.type === 'pairs' ? 'bg-gradient-to-r from-indigo-500 to-purple-400 shadow-[0_0_8px_rgba(129,140,248,0.6)]' :
+                                            viewAllModal.type === 'trios' ? 'bg-gradient-to-r from-rose-500 to-pink-400 shadow-[0_0_8px_rgba(244,63,94,0.6)]' :
+                                              'bg-gradient-to-r from-emerald-400 to-teal-300 shadow-[0_0_8px_rgba(52,211,153,0.6)]')
+                                          : 'bg-gradient-to-r from-emerald-700/60 to-teal-600/60'
+                                        )
+                                        }`
+                                      }
+                                      style={{ width: `${Math.max(((viewAllModal.type === 'cold' ? item.kỳ_chưa_về : item.tần_suất) / maxFreq) * 100, 2)}%` }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          ));
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Info Modal */}
+            {infoModalOpen && (
+              <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-xl relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                  <div className="p-5 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-gray-900 z-10 rounded-t-2xl">
+                    <h2 className="text-xl font-bold text-gray-100 flex items-center gap-2">
+                      <Code2 className="w-5 h-5 text-teal-400" />
+                      Về Dự Án Vietlott Analytics
+                    </h2>
+                    <button
+                      onClick={() => setInfoModalOpen(false)}
+                      className="text-gray-400 hover:text-white transition-colors p-2 bg-gray-800 hover:bg-gray-700 rounded-full"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+
+                    {/* Giới thiệu */}
+                    <section>
+                      <h3 className="text-sm font-bold text-teal-400 mb-2 uppercase tracking-wider flex items-center gap-2">
+                        <Info className="w-4 h-4" /> Giới Thiệu
+                      </h3>
+                      <p className="text-slate-300 text-sm leading-relaxed">
+                        Hệ thống phân tích tần suất xổ số Vietlott (Mega 6/45 & Power 6/55) dựa trên toàn bộ lịch sử các kỳ quay thực tế. Dữ liệu được trích xuất (crawl) tự động hàng ngày thông qua Github Actions. Giúp bạn theo dõi số nóng, dự đoán xác suất ra của các bộ số.
+                      </p>
+                    </section>
+
+                    {/* Lịch Sử Cập Nhật (Release Notes) */}
+                    <section className="border-t border-gray-800 pt-5">
+                      <h3 className="text-sm font-bold text-indigo-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+                        <Rocket className="w-4 h-4" /> Bản Cập Nhật
+                      </h3>
+                      <div className="text-xs text-slate-400 space-y-2 font-mono leading-relaxed">
+                        <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-26</span> Thêm Thẻ hiển thị **Giá Trị Jackpot Ước Tính** siêu mượt và **Bộ Đếm Ngược Kỳ Xổ Tiếp Theo** theo chuẩn giờ Việt Nam. Thêm tính năng **Mua Vé Ngay Qua SMS** tạo cú pháp cực nhanh.</p>
+                        <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-25</span> Thêm Modal Xem Tất Cả (full list) kèm Progress Bar trực quan. Thuật toán Dự Đoán Cặp Số tinh túy hơn.</p>
+                        <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-24</span> Kiến trúc crawl data tự động & Sync Google Sheets hoạt động.</p>
+                      </div>
+                    </section>
+
+                    {/* Ủng Hộ (Donate) */}
+                    <section className="border-t border-gray-800 pt-5">
+                      <div className="bg-gradient-to-br from-pink-900/30 to-purple-900/30 p-4 rounded-xl border border-pink-700/50 shadow-inner">
+                        <h3 className="text-base font-bold text-pink-400 mb-1 flex items-center gap-2">
+                          <Heart className="w-4 h-4 fill-pink-400" /> Ủng Hộ (Donate)
+                        </h3>
+                        <p className="text-slate-300 text-xs mb-4">
+                          Nếu tool giúp bạn tính toán nhàn hơn hoặc may mắn trúng giải, xin ly cafe nha! ❤️
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-4 items-center justify-start">
+                          <div className="bg-white p-1.5 rounded-xl shadow-lg shrink-0 w-24 h-24 flex items-center justify-center">
+                            <img
+                              src="/donation-qr.jpg"
+                              alt="QR Code Momo"
+                              className="max-w-full max-h-full object-contain rounded-lg"
+                            />
+                          </div>
+                          <div className="text-sm space-y-2 text-left bg-black/40 p-3 rounded-lg border border-gray-700/50 flex-1 w-full">
+                            <p className="flex justify-between items-center"><strong className="text-pink-400">MoMo:</strong> <span className="font-mono text-white bg-gray-800 px-2 rounded">0363839007</span></p>
+                            <p className="flex justify-between items-center"><strong className="text-blue-400">Bank (ACB):</strong> <span className="font-mono text-white bg-gray-800 px-2 rounded">12342467</span></p>
+                            <div className="text-xs text-slate-400 pt-1 border-t border-gray-800">
+                              Chủ TK: Đặng Ngọc Chính<br />
+                              <span className="italic opacity-80">* Nội dung: Vietlott + Tên bạn</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
-
-      {/* Info Modal */}
-      {infoModalOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-xl relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            <div className="p-5 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-gray-900 z-10 rounded-t-2xl">
-              <h2 className="text-xl font-bold text-gray-100 flex items-center gap-2">
-                <Code2 className="w-5 h-5 text-teal-400" />
-                Về Dự Án Vietlott Analytics
-              </h2>
-              <button
-                onClick={() => setInfoModalOpen(false)}
-                className="text-gray-400 hover:text-white transition-colors p-2 bg-gray-800 hover:bg-gray-700 rounded-full"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
-
-              {/* Giới thiệu */}
-              <section>
-                <h3 className="text-sm font-bold text-teal-400 mb-2 uppercase tracking-wider flex items-center gap-2">
-                  <Info className="w-4 h-4" /> Giới Thiệu
-                </h3>
-                <p className="text-slate-300 text-sm leading-relaxed">
-                  Hệ thống phân tích tần suất xổ số Vietlott (Mega 6/45 & Power 6/55) dựa trên toàn bộ lịch sử các kỳ quay thực tế. Dữ liệu được trích xuất (crawl) tự động hàng ngày thông qua Github Actions. Giúp bạn theo dõi số nóng, dự đoán xác suất ra của các bộ số.
-                </p>
-              </section>
-
-              {/* Lịch Sử Cập Nhật (Release Notes) */}
-              <section className="border-t border-gray-800 pt-5">
-                <h3 className="text-sm font-bold text-indigo-400 mb-3 uppercase tracking-wider flex items-center gap-2">
-                  <Rocket className="w-4 h-4" /> Bản Cập Nhật
-                </h3>
-                <div className="text-xs text-slate-400 space-y-2 font-mono leading-relaxed">
-                  <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-26</span> Thêm Thẻ hiển thị **Giá Trị Jackpot Ước Tính** siêu mượt và **Bộ Đếm Ngược Kỳ Xổ Tiếp Theo** theo chuẩn giờ Việt Nam. Thêm tính năng **Mua Vé Ngay Qua SMS** tạo cú pháp cực nhanh.</p>
-                  <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-25</span> Thêm Modal Xem Tất Cả (full list) kèm Progress Bar trực quan. Thuật toán Dự Đoán Cặp Số tinh túy hơn.</p>
-                  <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-24</span> Kiến trúc crawl data tự động & Sync Google Sheets hoạt động.</p>
-                </div>
-              </section>
-
-              {/* Ủng Hộ (Donate) */}
-              <section className="border-t border-gray-800 pt-5">
-                <div className="bg-gradient-to-br from-pink-900/30 to-purple-900/30 p-4 rounded-xl border border-pink-700/50 shadow-inner">
-                  <h3 className="text-base font-bold text-pink-400 mb-1 flex items-center gap-2">
-                    <Heart className="w-4 h-4 fill-pink-400" /> Ủng Hộ (Donate)
-                  </h3>
-                  <p className="text-slate-300 text-xs mb-4">
-                    Nếu tool giúp bạn tính toán nhàn hơn hoặc may mắn trúng giải, xin ly cafe nha! ❤️
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4 items-center justify-start">
-                    <div className="bg-white p-1.5 rounded-xl shadow-lg shrink-0 w-24 h-24 flex items-center justify-center">
-                      <img
-                        src="/donation-qr.jpg"
-                        alt="QR Code Momo"
-                        className="max-w-full max-h-full object-contain rounded-lg"
-                      />
-                    </div>
-                    <div className="text-sm space-y-2 text-left bg-black/40 p-3 rounded-lg border border-gray-700/50 flex-1 w-full">
-                      <p className="flex justify-between items-center"><strong className="text-pink-400">MoMo:</strong> <span className="font-mono text-white bg-gray-800 px-2 rounded">0363839007</span></p>
-                      <p className="flex justify-between items-center"><strong className="text-blue-400">Bank (ACB):</strong> <span className="font-mono text-white bg-gray-800 px-2 rounded">12342467</span></p>
-                      <div className="text-xs text-slate-400 pt-1 border-t border-gray-800">
-                        Chủ TK: Đặng Ngọc Chính<br />
-                        <span className="italic opacity-80">* Nội dung: Vietlott + Tên bạn</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
