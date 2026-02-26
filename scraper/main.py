@@ -1,14 +1,15 @@
 import os
 import json
-from playwright.sync_api import sync_playwright
+import re
+import requests
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime
 
 # URL config
 URLS = {
-    'Mega645': 'https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/mega-6-45',
-    'Power655': 'https://vietlott.vn/vi/trung-thuong/ket-qua-trung-thuong/power-6-55'
+    'Mega645': 'https://raw.githubusercontent.com/vietvudanh/vietlott-data/master/data/power645.jsonl',
+    'Power655': 'https://raw.githubusercontent.com/vietvudanh/vietlott-data/master/data/power655.jsonl'
 }
 
 def get_google_sheet():
@@ -32,80 +33,86 @@ def get_google_sheet():
     sheet = client.open_by_url(sheet_url)
     return sheet
 
-def scrape_vietlott(url, p):
-    print(f"Scraping: {url}")
-    browser = p.chromium.launch(headless=True)
-    context = browser.new_context(ignore_https_errors=True)
-    page = context.new_page()
-    
+def fetch_vietlott_data(url):
+    print(f"Fetching: {url}")
     try:
-        page.goto(url, timeout=30000, wait_until="domcontentloaded")
-        page.wait_for_selector('.box-ketqua', timeout=10000)
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
         
-        # Extract Draw Date / ID
-        draw_info_el = page.query_selector('h5')
-        draw_info = draw_info_el.inner_text().strip() if draw_info_el else ""
+        # Get the last non-empty line
+        lines = [line.strip() for line in response.text.split('\n') if line.strip()]
+        if not lines:
+            return None
+            
+        last_line = lines[-1]
+        data = json.loads(last_line)
         
-        # Extract Numbers
-        balls_el = page.query_selector_all('.bong_tron')
-        numbers = [b.inner_text().strip() for b in balls_el if b.inner_text().strip()]
+        # Parse data JSON: {"date":"2026-02-25","id":"01476","result":[4,13,20,22,23,29]}
+        draw_date = datetime.strptime(data['date'], '%Y-%m-%d').strftime('%d/%m/%Y')
+        draw_id = data['id']
+        draw_info = f"Kỳ {draw_id} | {draw_date}"
+        
+        # Format numbers to be consistent (2 digits)
+        numbers = [f"{num:02d}" for num in data['result']]
         
         return {
+            'draw_id': draw_id,
             'draw_info': draw_info,
             'numbers': numbers,
             'scraped_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
     except Exception as e:
-        print(f"Error scraping {url}: {e}")
+        print(f"Error fetching {url}: {e}")
         return None
-    finally:
-        context.close()
-        browser.close()
 
 def append_to_sheet(worksheet, data):
-    # Retrieve existing records to avoid duplicates based on 'draw_info'
     existing_records = worksheet.get_all_records()
-    existing_draws = [str(r.get('Kỳ QSMT / Ngày', '')) for r in existing_records]
     
-    # Row format: [Kỳ QSMT / Ngày, Số 1, Số 2, Số 3, Số 4, Số 5, Số 6, Số Đặc Biệt, Ngày Cào]
-    draw_info = data['draw_info']
-    
-    if draw_info in existing_draws and draw_info != "":
-        print(f"Data for {draw_info} already exists. Skipping.")
+    # robust duplicate check by ID
+    existing_ids = []
+    for r in existing_records:
+        val = str(r.get('Kỳ QSMT / Ngày', ''))
+        match = re.search(r'Kỳ\s*:?\s*(\d+)', val, re.IGNORECASE)
+        if match:
+            existing_ids.append(match.group(1))
+            
+    draw_id = data['draw_id']
+    if draw_id in existing_ids:
+        print(f"Data for Ky {draw_id} already exists. Skipping.")
         return
         
+    draw_info = data['draw_info']
     num_balls = data['numbers']
     row = [draw_info] + num_balls
     # If it's Mega, it only has 6 balls. Power has 7.
-    # We pad to 7 balls just in case.
     while len(row) < 8:
         row.append("")
         
     row.append(data['scraped_at'])
     
     worksheet.append_row(row)
-    print(f"Successfully appended {draw_info} to sheet.")
+    safe_info = draw_info.replace('Kỳ', 'Ky')
+    print(f"Successfully appended {safe_info} to sheet.")
 
 def main():
-    print("Starting Vietlott Scraper...")
+    print("Starting Vietlott API Scraper...")
     sheet = get_google_sheet()
     
-    with sync_playwright() as p:
-        for name, url in URLS.items():
-            print(f"--- Processing {name} ---")
-            data = scrape_vietlott(url, p)
-            if data and data['numbers']:
-                print(f"Found data: {data}")
-                try:
-                    worksheet = sheet.worksheet(name)
-                    # Initialize headers if empty
-                    if len(worksheet.get_all_values()) == 0:
-                        worksheet.append_row(["Kỳ QSMT / Ngày", "Số 1", "Số 2", "Số 3", "Số 4", "Số 5", "Số 6", "Số Đặc Biệt", "Ngày Cào"])
-                    append_to_sheet(worksheet, data)
-                except gspread.exceptions.WorksheetNotFound:
-                    print(f"Worksheet '{name}' not found. Please create it.")
-            else:
-                print(f"Failed to scrape data for {name}")
+    for name, url in URLS.items():
+        print(f"--- Processing {name} ---")
+        data = fetch_vietlott_data(url)
+        if data and data['numbers']:
+            print(f"Found data for Ky {data['draw_id']}")
+            try:
+                worksheet = sheet.worksheet(name)
+                # Initialize headers if empty
+                if len(worksheet.get_all_values()) == 0:
+                    worksheet.append_row(["Kỳ QSMT / Ngày", "Số 1", "Số 2", "Số 3", "Số 4", "Số 5", "Số 6", "Số Đặc Biệt", "Ngày Cào"])
+                append_to_sheet(worksheet, data)
+            except gspread.exceptions.WorksheetNotFound:
+                print(f"Worksheet '{name}' not found. Please create it.")
+        else:
+            print(f"Failed to scrape data for {name}")
 
 if __name__ == "__main__":
     main()
