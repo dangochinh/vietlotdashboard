@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { MAX_NUMBERS } from './lib/constants';
 import { useVietlottData } from './hooks/useVietlottData';
@@ -31,6 +31,18 @@ export default function Dashboard() {
   const [predictError, setPredictError] = useState('');
   const [algorithmType, setAlgorithmType] = useState('co-occurrence');
   const [isPredicting, setIsPredicting] = useState(false);
+  const [clientId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      let id = localStorage.getItem('vietlott_client_id');
+      if (!id) {
+        id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        localStorage.setItem('vietlott_client_id', id);
+      }
+      return id;
+    }
+    return '';
+  });
+
 
   // Data hooks
   const { data, loading, error, jackpotData, lastUpdated } = useVietlottData(activeTab);
@@ -48,7 +60,7 @@ export default function Dashboard() {
       if (algorithmType === 'co-occurrence') {
         result = predictByCoOccurrence(inputNumber, activeTab, data);
       } else {
-        result = predictBy4LayerFiltering(inputNumber, activeTab, data);
+        result = predictBy4LayerFiltering(inputNumber, activeTab, data, clientId);
       }
 
       setPredictError(result.error);
