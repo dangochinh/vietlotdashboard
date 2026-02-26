@@ -141,8 +141,8 @@ export default function Dashboard() {
   }, [data, activeTab]);
 
   // Compute Frequency of Pairs and Trios
-  const { pairData, trioData } = useMemo(() => {
-    if (!data || data.length === 0) return { pairData: [], trioData: [] };
+  const { pairData, trioData, pairDataFull, trioDataFull } = useMemo(() => {
+    if (!data || data.length === 0) return { pairData: [], trioData: [], pairDataFull: [], trioDataFull: [] };
 
     const pairCounts = {};
     const trioCounts = {};
@@ -518,33 +518,46 @@ export default function Dashboard() {
                 <table className="w-full text-sm text-left">
                   <thead className="text-xs text-gray-500 uppercase bg-[#161B22] rounded-lg">
                     <tr>
-                      <th className="px-4 py-3 rounded-tl-lg rounded-bl-lg">
+                      <th className="px-4 py-3 rounded-tl-lg rounded-bl-lg w-1/3">
                         {viewAllModal.type === 'frequency' ? 'Số' : 'Bộ Số'}
                       </th>
-                      <th className="px-4 py-3 text-right rounded-tr-lg rounded-br-lg">Số Lần Xuất Hiện</th>
+                      <th className="px-4 py-3 px-8 w-2/3">Tần Suất / So Sánh</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(viewAllModal.type === 'frequency' ? frequencyData.full :
-                      viewAllModal.type === 'pairs' ? pairDataFull :
-                        trioDataFull)?.map((item, idx) => (
-                          <tr key={idx} className="border-b border-gray-800/40 hover:bg-gray-800/40 transition-colors">
-                            <td className="px-4 py-3 text-gray-300 font-medium whitespace-nowrap">
-                              {viewAllModal.type === 'frequency' ? (
-                                <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 text-sm font-bold border border-gray-700">
-                                  {item.name}
-                                </span>
-                              ) : (
-                                <span className="font-mono bg-gray-800 px-3 py-1 rounded-md border border-gray-700">
-                                  {item.name}
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-4 py-3 text-right font-bold text-emerald-400">
-                              {item.tần_suất}
-                            </td>
-                          </tr>
-                        ))}
+                    {(() => {
+                      const listData = viewAllModal.type === 'frequency' ? frequencyData.full :
+                        viewAllModal.type === 'pairs' ? pairDataFull :
+                          trioDataFull || [];
+                      const maxFreq = listData.length > 0 ? listData[0].tần_suất : 1;
+
+                      return listData.map((item, idx) => (
+                        <tr key={idx} className="border-b border-gray-800/40 hover:bg-gray-800/40 transition-colors">
+                          <td className="px-4 py-3 text-gray-300 font-medium whitespace-nowrap">
+                            {viewAllModal.type === 'frequency' ? (
+                              <span className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 text-sm font-bold border border-gray-700">
+                                {item.name}
+                              </span>
+                            ) : (
+                              <span className="font-mono bg-gray-800 px-3 py-1 rounded-md border border-gray-700">
+                                {item.name}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-3">
+                              <span className="font-bold text-emerald-400 w-10 text-right">{item.tần_suất}</span>
+                              <div className="flex-1 h-2.5 bg-gray-800 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-emerald-600 to-teal-400 rounded-full"
+                                  style={{ width: `${Math.max((item.tần_suất / maxFreq) * 100, 2)}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ));
+                    })()}
                   </tbody>
                 </table>
               </div>
