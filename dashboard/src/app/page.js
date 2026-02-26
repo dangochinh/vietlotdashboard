@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
-import { Loader2, TrendingUp, Calendar, AlertCircle } from 'lucide-react';
+import { Loader2, TrendingUp, Calendar, AlertCircle, Wand2, X } from 'lucide-react';
 
 const Ball = ({ num, isSpecial }) => {
   if (!num) return null;
@@ -23,6 +23,63 @@ export default function Dashboard() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Prediction State
+  const [predictModalOpen, setPredictModalOpen] = useState(false);
+  const [inputNumber, setInputNumber] = useState('');
+  const [predictedNumbers, setPredictedNumbers] = useState([]);
+  const [predictError, setPredictError] = useState('');
+
+  const handlePredict = () => {
+    setPredictError('');
+    setPredictedNumbers([]);
+
+    let num = inputNumber.trim();
+    if (num.length === 1) num = '0' + num;
+    const maxNum = activeTab === 'Mega645' ? 45 : 55;
+
+    if (!num || isNaN(num) || parseInt(num) < 1 || parseInt(num) > maxNum) {
+      setPredictError(`Vui lòng nhập số từ 01 đến ${maxNum}`);
+      return;
+    }
+
+    // Find all draws containing this number
+    const relevantDraws = data.filter(row => {
+      for (let i = 1; i <= 6; i++) {
+        if (row[`Số ${i}`] === num) return true;
+      }
+      return false;
+    });
+
+    if (relevantDraws.length === 0) {
+      setPredictError('Chưa có lịch sử đủ dài cho số này.');
+      return;
+    }
+
+    // Count frequency of other numbers in these draws
+    const counts = {};
+    relevantDraws.forEach(row => {
+      for (let i = 1; i <= 6; i++) {
+        const val = row[`Số ${i}`];
+        if (val && val !== num) {
+          counts[val] = (counts[val] || 0) + 1;
+        }
+      }
+    });
+
+    // Sort by frequency descending
+    const sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+
+    // Pick top 5
+    const top5 = sorted.slice(0, 5);
+
+    if (top5.length < 5) {
+      setPredictError('Không đủ dữ liệu để gợi ý 5 số.');
+      return;
+    }
+
+    setPredictedNumbers(top5.sort((a, b) => parseInt(a) - parseInt(b)));
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -132,7 +189,7 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto space-y-8">
 
         {/* Header */}
-        <header className="flex flex-col md:flex-row items-center justify-between border-b border-gray-800 pb-6">
+        <header className="flex flex-col md:flex-row items-center justify-between border-b border-gray-800 pb-4 sticky top-0 z-50 bg-[#0E1217]/95 backdrop-blur-xl pt-4 shadow-2xl rounded-b-2xl px-4 -mx-4 mb-4">
           <div>
             <h1 className="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-emerald-600">
               Vietlott Analytics
@@ -154,7 +211,78 @@ export default function Dashboard() {
               Power 6/55
             </button>
           </div>
+
+          <div className="mt-4 md:mt-0">
+            <button
+              onClick={() => {
+                setPredictModalOpen(true);
+                setPredictError('');
+                setPredictedNumbers([]);
+                setInputNumber('');
+              }}
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-indigo-500/30 border border-indigo-400/30"
+            >
+              <Wand2 className="w-4 h-4" />
+              Dự Đoán
+            </button>
+          </div>
         </header>
+
+        {/* Prediction Modal */}
+        {predictModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-gray-900 border border-gray-700 p-6 rounded-2xl shadow-2xl w-full max-w-md relative animate-in zoom-in-95 duration-200">
+              <button
+                onClick={() => setPredictModalOpen(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-400 flex items-center gap-2 mb-2">
+                <Wand2 className="w-6 h-6 text-purple-400" />
+                Dự Đoán {activeTab}
+              </h2>
+              <p className="text-gray-400 text-sm mb-6">Nhập 1 số bạn thích. Hệ thống sẽ phân tích lịch sử {data.length} kỳ quay để tìm ra 5 số thường xuất hiện cùng Số đó nhất.</p>
+
+              <div className="flex gap-3 mb-4">
+                <input
+                  type="number"
+                  value={inputNumber}
+                  onChange={(e) => setInputNumber(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handlePredict()}
+                  placeholder="Nhập 1 số (vd: 05)"
+                  className="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-mono text-lg text-center"
+                />
+                <button
+                  onClick={handlePredict}
+                  className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg transition-colors flex items-center gap-2"
+                >
+                  Tìm
+                </button>
+              </div>
+
+              {predictError && (
+                <div className="text-red-400 text-sm mb-4 px-2 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" /> {predictError}
+                </div>
+              )}
+
+              {predictedNumbers.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-gray-800 animate-in fade-in slide-in-from-bottom-2">
+                  <p className="text-sm text-gray-400 mb-3 font-medium">Bộ số gợi ý tốt nhất:</p>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    <Ball num={inputNumber.padStart(2, '0').trim()} isSpecial={true} />
+                    <div className="w-px h-10 bg-gray-700 mx-1 align-middle self-center"></div>
+                    {predictedNumbers.map((num, i) => (
+                      <Ball key={i} num={num} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
