@@ -71,17 +71,19 @@ export default function Dashboard() {
     });
 
     // Sort by frequency descending
-    const sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+    const sorted = Object.keys(counts)
+      .filter(key => counts[key] > 0)
+      .sort((a, b) => counts[b] - counts[a]);
 
-    // Pick top 5
-    const top5 = sorted.slice(0, 5);
+    // Pick top 5 (or less if not enough historical pairs exist)
+    const topChoices = sorted.slice(0, 5);
 
-    if (top5.length < 5) {
-      setPredictError('Không đủ dữ liệu để gợi ý 5 số.');
+    if (topChoices.length === 0) {
+      setPredictError('Số này chưa từng xuất hiện cùng số nào khác trong lịch sử.');
       return;
     }
 
-    setPredictedNumbers(top5.sort((a, b) => parseInt(a) - parseInt(b)));
+    setPredictedNumbers(topChoices.sort((a, b) => parseInt(a) - parseInt(b)));
   };
 
   useEffect(() => {
