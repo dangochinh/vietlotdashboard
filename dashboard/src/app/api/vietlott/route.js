@@ -76,8 +76,8 @@ export async function GET(request) {
             return obj;
         });
 
-        // Reverse data to get latest draws first, and limit to recent 100 draws
-        const recentData = data.reverse().slice(0, 100);
+        // Reverse data to get latest draws first
+        const recentData = data.reverse();
 
         return NextResponse.json({ success: true, data: recentData });
 
