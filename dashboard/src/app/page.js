@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
-import { Loader2, TrendingUp, Calendar, AlertCircle, Wand2, X, Info, Heart, Rocket, Code2, Send } from 'lucide-react';
+import { Loader2, TrendingUp, Calendar, AlertCircle, Wand2, X, Info, Heart, Rocket, Code2, Send, Timer } from 'lucide-react';
 
 const Ball = ({ num, isSpecial }) => {
   if (!num) return null;
@@ -36,6 +36,42 @@ export default function Dashboard() {
   const [inputNumber, setInputNumber] = useState('');
   const [predictedNumbers, setPredictedNumbers] = useState([]);
   const [predictError, setPredictError] = useState('');
+
+  // Jackpot & Countdown State
+  const [jackpotData, setJackpotData] = useState(null);
+  const [countdown, setCountdown] = useState('');
+
+  const calculateCountdown = (type) => {
+    const now = new Date();
+    const vnTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+
+    const drawDays = type === 'Mega645' ? [3, 5, 0] : [2, 4, 6];
+    const currentDay = vnTime.getDay();
+    const currentHour = vnTime.getHours();
+
+    let daysToAdd = 0;
+    if (drawDays.includes(currentDay) && currentHour < 18) {
+      daysToAdd = 0;
+    } else {
+      daysToAdd = 1;
+      while (!drawDays.includes((currentDay + daysToAdd) % 7)) {
+        daysToAdd++;
+      }
+    }
+
+    const targetVnDate = new Date(vnTime);
+    targetVnDate.setDate(targetVnDate.getDate() + daysToAdd);
+    targetVnDate.setHours(18, 0, 0, 0);
+
+    const diffMs = targetVnDate.getTime() - vnTime.getTime();
+    if (diffMs <= 0) return 'Đang Xổ';
+
+    // Format DD HH MM SS
+    const h = Math.floor(diffMs / (1000 * 60 * 60));
+    const m = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const s = Math.floor((diffMs % (1000 * 60)) / 1000);
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
 
   const handlePredict = () => {
     setPredictError('');
@@ -94,11 +130,24 @@ export default function Dashboard() {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
+      setJackpotData(null); // Reset on tab switch
+
       try {
-        const res = await fetch(`/api/vietlott?type=${activeTab}`);
+        const [res, jackpotRes] = await Promise.all([
+          fetch(`/api/vietlott?type=${activeTab}`),
+          fetch(`/api/jackpot?type=${activeTab}`)
+        ]);
+
         const result = await res.json();
+        const jackpotResult = await jackpotRes.json();
+
         if (result.success) {
           setData(result.data);
+
+          // Render jackpot if success
+          if (jackpotResult.success) {
+            setJackpotData(jackpotResult.data);
+          }
 
           // Fetch last updated time from github (crawler job)
           try {
@@ -128,6 +177,14 @@ export default function Dashboard() {
       }
     };
     fetchData();
+
+    // Start Countdown Interval
+    setCountdown(calculateCountdown(activeTab));
+    const timer = setInterval(() => {
+      setCountdown(calculateCountdown(activeTab));
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, [activeTab]);
 
   // Compute Frequency of Numbers
@@ -369,6 +426,57 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+
+            {/* Jackpot Layout */}
+            {jackpotData && (
+              <section className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 md:p-8 border border-gray-700 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col items-center justify-center text-center">
+                <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-yellow-500/10 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-[-50px] left-[-50px] w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl"></div>
+
+                <h2 className="text-xl md:text-2xl font-bold text-gray-300 mb-2 drop-shadow-sm flex items-center justify-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+                  Giá trị Jackpot Ước Tính
+                </h2>
+
+                {activeTab === 'Mega645' ? (
+                  <p className="text-4xl md:text-6xl font-black mb-4">
+                    <span className="bg-clip-text text-transparent bg-gradient-to-b from-yellow-300 to-amber-500 drop-shadow-md">
+                      {jackpotData.jackpot1}
+                    </span>
+                    <span className="text-2xl md:text-3xl text-amber-500 ml-2">VNĐ</span>
+                  </p>
+                ) : (
+                  <div className="flex flex-col md:flex-row gap-6 md:gap-16 mb-4 mt-2">
+                    <div>
+                      <p className="text-sm font-bold text-gray-400 mb-1 uppercase tracking-widest">Jackpot 1</p>
+                      <p className="text-3xl md:text-5xl font-black">
+                        <span className="bg-clip-text text-transparent bg-gradient-to-b from-yellow-300 to-amber-500 drop-shadow-md">
+                          {jackpotData.jackpot1 || '???'}
+                        </span>
+                      </p>
+                    </div>
+                    {jackpotData.jackpot2 && (
+                      <div>
+                        <p className="text-sm font-bold text-gray-400 mb-1 uppercase tracking-widest">Jackpot 2</p>
+                        <p className="text-3xl md:text-5xl font-black">
+                          <span className="bg-clip-text text-transparent bg-gradient-to-b from-emerald-300 to-teal-500 drop-shadow-md">
+                            {jackpotData.jackpot2}
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="mt-4 flex flex-col items-center gap-2">
+                  <div className="bg-black/40 border border-gray-700 backdrop-blur-sm px-6 py-2.5 rounded-2xl flex items-center gap-3">
+                    <Timer className="w-5 h-5 text-gray-400 animate-pulse" />
+                    <span className="text-gray-300 font-medium">Kỳ Quay Trưởng Tiếp Theo:</span>
+                    <span className="text-xl md:text-2xl font-mono tracking-widest font-black text-white">{countdown}</span>
+                  </div>
+                </div>
+              </section>
+            )}
 
             {/* Hero Section: Latest Draw */}
             <section className="bg-gray-900/50 backdrop-blur-md rounded-3xl p-8 border border-gray-800 shadow-2xl relative overflow-hidden">
