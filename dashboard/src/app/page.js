@@ -770,9 +770,9 @@ export default function Dashboard() {
                   <Rocket className="w-4 h-4" /> Bản Cập Nhật
                 </h3>
                 <div className="text-xs text-slate-400 space-y-2 font-mono leading-relaxed">
-                  <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-26</span> Thêm Modal Xem Tất Cả (full list) kèm Progress Bar trực quan cực nét. Cập nhật Info Modal.</p>
-                  <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-26</span> Thêm thuật toán Dự Đoán Cặp Số loại trừ các cặp chưa từng xuất hiện. Sticky Header.</p>
-                  <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-25</span> Hoàn thiện kiến trúc crawl data Github tự động & Sync Google Sheets.</p>
+                  <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-26</span> Thêm Thẻ hiển thị **Giá Trị Jackpot Ước Tính** siêu mượt và **Bộ Đếm Ngược Kỳ Xổ Tiếp Theo** theo chuẩn giờ Việt Nam. Thêm tính năng **Mua Vé Ngay Qua SMS** tạo cú pháp cực nhanh.</p>
+                  <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-25</span> Thêm Modal Xem Tất Cả (full list) kèm Progress Bar trực quan. Thuật toán Dự Đoán Cặp Số tinh túy hơn.</p>
+                  <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-24</span> Kiến trúc crawl data tự động & Sync Google Sheets hoạt động.</p>
                 </div>
               </section>
 
