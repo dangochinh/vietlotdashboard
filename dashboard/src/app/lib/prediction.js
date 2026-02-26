@@ -1,5 +1,15 @@
 import { MAX_NUMBERS } from './constants';
 
+function mulberry32(a) {
+    return function () {
+        var t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+}
+
+
 // ---- ALGORITHM 1: CO-OCCURRENCE (DEFAULT) ----
 export function predictByCoOccurrence(inputNumber, activeTab, data) {
     let num = inputNumber.trim();
@@ -75,14 +85,18 @@ export function predictBy4LayerFiltering(inputNumber, activeTab, data) {
     const MAX_SUM = activeTab === 'Mega645' ? 160 : 180;
     const HIGH_THRESHOLD = activeTab === 'Mega645' ? 22 : 27;
 
-    // Helper: Pick random element from array
-    const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    // Create a deterministic RNG seeded by the input number and latest draw ID
+    const latestDrawId = data[0]['Kỳ QSMT'] ? parseInt(data[0]['Kỳ QSMT'].replace(/\D/g, '')) || data.length : data.length;
+    const seed = parseInt(num) * 100000 + latestDrawId;
+    const rng = mulberry32(seed);
+
+    // Helper: Pick random element from array using seeded PRNG
     const pickRandomSet = (arr, count, exclude = []) => {
         const available = arr.filter(x => !exclude.includes(x));
         const result = [];
         for (let i = 0; i < count; i++) {
             if (available.length === 0) break;
-            const idx = Math.floor(Math.random() * available.length);
+            const idx = Math.floor(rng() * available.length);
             result.push(available[idx]);
             available.splice(idx, 1);
         }
@@ -113,7 +127,7 @@ export function predictBy4LayerFiltering(inputNumber, activeTab, data) {
         // Fill remaining randomly if strict sets overlapped too much
         let safetyCounter = 0;
         while (candidateSet.size < 6 && safetyCounter < 100) {
-            const rand = Math.floor(Math.random() * maxNum) + 1;
+            const rand = Math.floor(rng() * maxNum) + 1;
             candidateSet.add(rand.toString().padStart(2, '0'));
             safetyCounter++;
         }
