@@ -3,18 +3,14 @@ import { NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs';
 
-// Force Next.js to dynamically evaluate this route at request time
 export const dynamic = 'force-dynamic';
 
-// Helper to get Google Auth
 async function getGoogleAuth() {
     let credentials;
 
-    // 1. Try environment variable (for Vercel deployment)
     if (process.env.GOOGLE_CREDENTIALS) {
         credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
     } else {
-        // 2. Try local file (for local development)
         const credsPath = path.join(process.cwd(), '../scraper/credentials.json');
         if (fs.existsSync(credsPath)) {
             credentials = JSON.parse(fs.readFileSync(credsPath, 'utf8'));
@@ -23,29 +19,25 @@ async function getGoogleAuth() {
         }
     }
 
-    const auth = new google.auth.GoogleAuth({
+    return new google.auth.GoogleAuth({
         credentials,
         scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
     });
-
-    return auth;
 }
 
 export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url);
-        const type = searchParams.get('type') || 'Mega645'; // 'Mega645' or 'Power655'
+        const type = searchParams.get('type') || 'Mega645';
 
-        // User's Google Sheet ID
-        const spreadsheetId = '1rkURU2bHuhgtf1k5uIzfG7sH8vQQ0VyaSra6M9WTo18';
+        const spreadsheetId = process.env.GOOGLE_SHEET_ID || '1rkURU2bHuhgtf1k5uIzfG7sH8vQQ0VyaSra6M9WTo18';
 
         const auth = await getGoogleAuth();
         const sheets = google.sheets({ version: 'v4', auth });
 
-        // Read all data from the specific sheet
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: `${type}!A:I`, // Fetch columns A to I
+            range: `${type}!A:I`,
         });
 
         const rows = response.data.values;
@@ -53,22 +45,17 @@ export async function GET(request) {
             return NextResponse.json({ success: true, data: [] });
         }
 
-        // Check if the first row is actually headers or data
-        // Data rows usually have "Kỳ" (from our seed) or a date.
-        // If it lacks 'Kỳ QSMT', we might not have headers, or the headers are missing.
         let dataStartIndex = 1;
         let headers = rows[0];
 
         if (!headers.includes("Kỳ QSMT / Ngày")) {
             headers = ["Kỳ QSMT / Ngày", "Số 1", "Số 2", "Số 3", "Số 4", "Số 5", "Số 6", "Số Đặc Biệt", "Ngày Cào"];
-            // If the first row looks like data, start from 0
             if (rows[0][0] && rows[0][0].includes("Kỳ")) {
                 dataStartIndex = 0;
             }
         }
 
         const data = rows.slice(dataStartIndex).map((row) => {
-            // row is an array of strings: [Kỳ QSMT / Ngày, Số 1, Số 2, Số 3, Số 4, Số 5, Số 6, Số Đặc Biệt, Ngày Cào]
             const obj = {};
             headers.forEach((header, index) => {
                 obj[header] = row[index] || '';
@@ -76,13 +63,11 @@ export async function GET(request) {
             return obj;
         });
 
-        // Reverse data to get latest draws first
         const recentData = data.reverse();
 
         return NextResponse.json({ success: true, data: recentData });
-
     } catch (error) {
         console.error('API Error:', error);
-        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+        return NextResponse.json({ success: false, error: 'Failed to fetch lottery data. Please try again later.' }, { status: 500 });
     }
 }

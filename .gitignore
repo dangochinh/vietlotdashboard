@@ -1,0 +1,15 @@
+# Credentials
+credentials.json
+
+# Temp debug files
+*.html
+!dashboard/**/*.html
+
+# Scraper temp data
+scraper/temp-vietlott-data/
+scraper/__pycache__/
+scraper/*.pyc
+
+# OS
+.DS_Store
+Thumbs.db
