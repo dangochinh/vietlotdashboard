@@ -46,7 +46,7 @@ export function predictByCoOccurrence(inputNumber, activeTab, data) {
 }
 
 // ---- ALGORITHM 2: 4-LAYER FILTERING ----
-export function predictBy4LayerFiltering(inputNumber, activeTab, data) {
+export function predictBy4LayerFiltering(inputNumber, activeTab, data, clientId = '') {
     let num = inputNumber.trim();
     if (num.length === 1) num = '0' + num;
     const maxNum = MAX_NUMBERS[activeTab];
@@ -85,9 +85,15 @@ export function predictBy4LayerFiltering(inputNumber, activeTab, data) {
     const MAX_SUM = activeTab === 'Mega645' ? 160 : 180;
     const HIGH_THRESHOLD = activeTab === 'Mega645' ? 22 : 27;
 
-    // Create a deterministic RNG seeded by the input number and latest draw ID
+    // Create a deterministic RNG seeded by the input number, latest draw ID, and client ID
+    let clientHash = 0;
+    for (let i = 0; i < clientId.length; i++) {
+        clientHash = (clientHash << 5) - clientHash + clientId.charCodeAt(i);
+        clientHash |= 0;
+    }
+
     const latestDrawId = data[0]['Kỳ QSMT'] ? parseInt(data[0]['Kỳ QSMT'].replace(/\D/g, '')) || data.length : data.length;
-    const seed = parseInt(num) * 100000 + latestDrawId;
+    const seed = parseInt(num) * 100000 + latestDrawId + Math.abs(clientHash);
     const rng = mulberry32(seed);
 
     // Helper: Pick random element from array using seeded PRNG
