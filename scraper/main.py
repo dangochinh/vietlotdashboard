@@ -74,13 +74,13 @@ def append_to_sheet(worksheet, data):
     existing_ids = []
     for r in existing_records:
         val = str(r.get('Kỳ QSMT / Ngày', ''))
-        match = re.search(r'Kỳ\s*:?\s*(\d+)', val, re.IGNORECASE)
+        match = re.search(r'K[yỳ][\s:]*(\d+)', val, re.IGNORECASE)
         if match:
-            existing_ids.append(match.group(1))
+            existing_ids.append(str(match.group(1)).lstrip('0'))
 
-    draw_id = data['draw_id']
+    draw_id = str(data['draw_id']).lstrip('0')
     if draw_id in existing_ids:
-        print(f"Data for Ky {draw_id} already exists. Skipping.")
+        print(f"Data for Ky {data['draw_id']} already exists. Skipping.")
         return
 
     row = [data['draw_info']] + data['numbers']
