@@ -15,7 +15,7 @@
 
 ## 🌐 Trải Nghiệm Thực Tế (Production)
 Bạn có thể tham khảo trực tiếp giao diện và quá trình hoạt động của dự án thông qua đường link sau:
-👉 **[Live Dashboard Production](https://dangochinh.github.io/vietlotdashboard)** *(Hoặc có thể xem trực tiếp trong Github Repository để trải nghiệm)*
+👉 **[Live Dashboard Production](https://vietlott-dashboard.vercel.app/)** *(Hoặc có thể xem trực tiếp trong Github Repository để trải nghiệm)*
 
 ---
 
