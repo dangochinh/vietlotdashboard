@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Wand2, X, AlertCircle, Send, Loader2 } from 'lucide-react';
 import Ball from './Ball';
 
@@ -5,9 +6,39 @@ export default function PredictModal({
     isOpen, onClose, activeTab, data,
     inputNumber, setInputNumber,
     predictedNumbers, predictError,
-    onPredict, algorithmType, setAlgorithmType, isPredicting
+    onPredict, onReroll, algorithmType, setAlgorithmType, isPredicting
 }) {
+    const [spinningIndex, setSpinningIndex] = useState(-1);
+    const [excludedHistory, setExcludedHistory] = useState([]);
+
     if (!isOpen) return null;
+
+    const handleInputChange = (e) => {
+        let val = e.target.value.replace(/\D/g, ''); // chỉ lấy số
+        if (val.length > 6) val = val.slice(0, 6); // tối đa 6 ký tự (3 số)
+        const formatted = val.match(/.{1,2}/g)?.join(' ') || '';
+        setInputNumber(formatted);
+    };
+
+    const handlePredictClick = () => {
+        setExcludedHistory([]);
+        onPredict();
+    };
+
+    const handleBallClick = (idx) => {
+        if (spinningIndex !== -1) return; // Prevent double clicks
+        
+        setSpinningIndex(idx);
+        const oldNum = predictedNumbers[idx];
+        const newExcluded = [...excludedHistory, oldNum];
+        setExcludedHistory(newExcluded);
+
+        // Fake delay for animation satisfaction
+        setTimeout(() => {
+            onReroll(idx, newExcluded);
+            setSpinningIndex(-1);
+        }, 400);
+    };
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -41,21 +72,22 @@ export default function PredictModal({
 
                 <p className="text-gray-400 text-sm mb-6 min-h-[40px]">
                     {algorithmType === 'co-occurrence'
-                        ? `Nhập 1 số bạn thích. Hệ thống sẽ phân tích toàn bộ lịch sử ${data.length} kỳ quay để tìm ra 5 số thường xuất hiện cùng Số đó nhất.`
-                        : `Thuật toán quét 1.000.000 bộ số ngẫu nhiên qua 4 lớp lọc (Tổng, Chẵn Lẻ, Khoảng Cách, Lịch Sử) kết hợp với số của bạn.`
+                        ? `Nhập 1-3 số bạn thích. Hệ thống sẽ phân tích toàn bộ lịch sử ${data.length} kỳ quay để tìm ra các số thường xuất hiện cùng Số đó nhất.`
+                        : `Thuật toán quét 1.000.000 bộ số ngẫu nhiên qua 4 lớp lọc (Tổng, Chẵn Lẻ, Khoảng Cách, ...) kết hợp với số của bạn.`
                     }
                 </p>
 
                 <div className="flex gap-3 mb-4">
                     <input
-                        type="number"
+                        type="text"
+                        inputMode="numeric"
                         value={inputNumber}
-                        onChange={(e) => setInputNumber(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && onPredict()}
-                        placeholder="Nhập 1 số (vd: 05)"
-                        className="flex-1 min-w-0 w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-mono text-base md:text-lg text-center"
+                        onChange={handleInputChange}
+                        onKeyDown={(e) => e.key === 'Enter' && handlePredictClick()}
+                        placeholder="Nhập tối đa 3 số (vd: 05 12 20)"
+                        className="flex-1 min-w-0 w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-mono text-base md:text-lg text-center tracking-widest"
                     />
-                    <button onClick={onPredict} disabled={isPredicting} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-bold shadow-lg transition-colors flex items-center justify-center gap-2 min-w-[90px]">
+                    <button onClick={handlePredictClick} disabled={isPredicting} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-bold shadow-lg transition-colors flex items-center justify-center gap-2 min-w-[90px]">
                         {isPredicting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Tìm'}
                     </button>
                 </div>
@@ -68,12 +100,30 @@ export default function PredictModal({
 
                 {predictedNumbers.length > 0 && (
                     <div className="mt-6 pt-6 border-t border-gray-800 animate-in fade-in slide-in-from-bottom-2 flex-1 overflow-y-auto custom-scrollbar">
-                        <p className="text-sm text-gray-400 mb-3 font-medium">Bộ số gợi ý tốt nhất:</p>
-                        <div className="flex flex-wrap gap-2 justify-center pb-4">
-                            <Ball num={inputNumber.padStart(2, '0').trim()} isSpecial={true} />
-                            <div className="w-px h-10 bg-gray-700 mx-1 align-middle self-center"></div>
+                        <p className="text-sm text-gray-400 mb-1 font-medium text-center">Bộ số gợi ý tốt nhất do hệ thống tính toán:</p>
+                        <p className="text-xs text-purple-400 mb-4 font-medium text-center italic">👉 Bấm vào các bóng màu xanh/đỏ để đổi lấy số khác</p>
+                        
+                        <div className="flex flex-wrap gap-x-2 gap-y-4 justify-center pb-4">
+                            {inputNumber.trim().split(/\s+/).filter(Boolean).map((n, i) => (
+                                <div key={`input-${i}`} className="flex flex-col items-center">
+                                    <Ball num={n.padStart(2, '0')} isSpecial={true} />
+                                    <span className="text-[10px] text-amber-500 mt-1 uppercase font-black tracking-widest whitespace-nowrap">Của bạn</span>
+                                </div>
+                            ))}
+
+                            <div className="w-px h-12 bg-gray-700 mx-1 align-middle self-start mt-0"></div>
+
                             {predictedNumbers.map((num, i) => (
-                                <Ball key={i} num={num} />
+                                <div key={`pred-${i}`} className="flex flex-col items-center">
+                                    <Ball 
+                                        num={num} 
+                                        onClick={() => handleBallClick(i)}
+                                        className={spinningIndex === i ? 'animate-[spin_0.4s_ease-in-out_infinite] opacity-50' : 'hover:-translate-y-1 hover:shadow-lg ring-2 ring-transparent hover:ring-indigo-400/50'}
+                                    />
+                                    <span className="text-[10px] text-gray-500 mt-1 uppercase font-bold tracking-widest h-3">
+                                        {spinningIndex === i ? 'Đang đổi...' : ''}
+                                    </span>
+                                </div>
                             ))}
                         </div>
                     </div>
@@ -83,8 +133,8 @@ export default function PredictModal({
                     <div className="mt-2 sticky bottom-0 bg-gray-900 pt-2 pb-1 z-10 animate-in fade-in slide-in-from-bottom-4">
                         <button
                             onClick={() => {
-                                const baseNum = inputNumber.padStart(2, '0').trim();
-                                const allNums = [baseNum, ...predictedNumbers].sort((a, b) => parseInt(a) - parseInt(b));
+                                const inputArray = inputNumber.trim().split(/\s+/).filter(Boolean).map(n => n.padStart(2, '0'));
+                                const allNums = [...inputArray, ...predictedNumbers].sort((a, b) => parseInt(a) - parseInt(b));
                                 const code = activeTab === 'Mega645' ? '645' : '655';
                                 const smsBody = `${code} K1 S ${allNums.join(' ')}`;
                                 window.location.href = `sms:9969?body=${encodeURIComponent(smsBody)}`;
