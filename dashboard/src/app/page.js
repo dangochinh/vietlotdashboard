@@ -18,6 +18,7 @@ import SumScatter from './components/SumScatter';
 import PredictModal from './components/PredictModal';
 import ViewAllModal from './components/ViewAllModal';
 import InfoModal from './components/InfoModal';
+import AdBanner from './components/AdBanner';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('Mega645');
@@ -177,6 +178,9 @@ export default function Dashboard() {
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <JackpotCard activeTab={activeTab} jackpotData={jackpotData} countdown={countdown} />
 
+            {/* ── Banner 1: Dưới Jackpot (vị trí vàng) ─────────────────── */}
+            <AdBanner position="top" />
+
             {/* Grid 1: Frequency + History */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <FrequencyChart data={frequencyData} onViewAll={setViewAllModal} />
@@ -189,6 +193,9 @@ export default function Dashboard() {
               <TriosChart data={trioData} onViewAll={setViewAllModal} />
             </div>
 
+            {/* ── Banner 2: Giữa trang ─────────────────────────────────── */}
+            <AdBanner position="mid" />
+
             {/* Grid 3: Cold Numbers + Even/Odd */}
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 mt-8">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -196,6 +203,9 @@ export default function Dashboard() {
                 <EvenOddPie data={evenOddData} />
               </div>
               <SumScatter data={sumData} activeTab={activeTab} />
+
+              {/* ── Banner 3: Cuối trang ─────────────────────────────── */}
+              <AdBanner position="bottom" className="mt-4" />
             </div>
 
             {/* Modals */}
