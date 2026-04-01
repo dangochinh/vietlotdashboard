@@ -65,7 +65,7 @@ function AdsenseUnit({ slot, format }) {
         style={{ display: 'block' }}
         data-ad-client={ADSENSE_CLIENT}
         data-ad-slot={slot}
-        data-ad-format={format === 'leaderboard' ? 'horizontal' : 'rectangle'}
+        data-ad-format="auto"
         data-full-width-responsive="true"
       />
     </div>
@@ -136,15 +136,16 @@ function AffiliateBanner({ bannerIndex = 0 }) {
 //  position dùng để chọn đúng AdSense slot & affiliate banner index
 // ─────────────────────────────────────────────────────────────────────────────
 const SLOT_MAP = {
-  top: process.env.NEXT_PUBLIC_AD_SLOT_TOP,
-  mid: process.env.NEXT_PUBLIC_AD_SLOT_MID,
-  bottom: process.env.NEXT_PUBLIC_AD_SLOT_BOT,
+  top: process.env.NEXT_PUBLIC_AD_SLOT_TOP || '1037761440',
+  mid: process.env.NEXT_PUBLIC_AD_SLOT_MID || '1037761440',
+  bottom: process.env.NEXT_PUBLIC_AD_SLOT_BOT || '1037761440',
 };
 const BANNER_INDEX_MAP = { top: 0, mid: 1, bottom: 2 };
 
 export default function AdBanner({ position = 'top', className = '' }) {
-  const adsEnabled = process.env.NEXT_PUBLIC_ADS_ENABLED === 'true';
-  const slot = SLOT_MAP[position] || SLOT_MAP.top;
+  // Đã có account Adsense nên bật luôn (không dùng affiliate placeholder nữa)
+  const adsEnabled = true;
+  const slot = SLOT_MAP[position];
   const bannerIndex = BANNER_INDEX_MAP[position] ?? 0;
 
   return (
