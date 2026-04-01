@@ -11,55 +11,68 @@ function mulberry32(a) {
 
 
 // ---- ALGORITHM 1: CO-OCCURRENCE (DEFAULT) ----
-export function predictByCoOccurrence(inputNumber, activeTab, data) {
-    let num = inputNumber.trim();
-    if (num.length === 1) num = '0' + num;
+export function predictByCoOccurrence(inputArray, targetCount, activeTab, data, excludeNumbers = []) {
     const maxNum = MAX_NUMBERS[activeTab];
 
-    if (!num || isNaN(num) || parseInt(num) < 1 || parseInt(num) > maxNum) {
-        return { error: `Vui lòng nhập số từ 01 đến ${maxNum}`, numbers: [] };
+    if (!inputArray || inputArray.length === 0) {
+        return { error: `Vui lòng nhập ít nhất 1 số`, numbers: [] };
     }
 
     const relevantDraws = data.filter(row => {
-        for (let i = 1; i <= 6; i++) { if (row[`Số ${i}`] === num) return true; }
+        for (let i = 1; i <= 6; i++) {
+            if (inputArray.includes(row[`Số ${i}`])) return true;
+        }
         return false;
     });
 
     if (relevantDraws.length === 0) {
-        return { error: 'Chưa có lịch sử đủ dài cho số này.', numbers: [] };
+        return { error: 'Chưa có lịch sử đủ dài cho các số này.', numbers: [] };
     }
 
     const counts = {};
     relevantDraws.forEach(row => {
         for (let i = 1; i <= 6; i++) {
             const val = row[`Số ${i}`];
-            if (val && val !== num) counts[val] = (counts[val] || 0) + 1;
+            if (val && !inputArray.includes(val) && !excludeNumbers.includes(val)) {
+                counts[val] = (counts[val] || 0) + 1;
+            }
         }
     });
 
-    const topChoices = Object.keys(counts).filter(k => counts[k] > 0).sort((a, b) => counts[b] - counts[a]).slice(0, 5);
-    if (topChoices.length === 0) {
-        return { error: 'Số này chưa từng xuất hiện cùng số nào khác.', numbers: [] };
+    const topChoices = Object.keys(counts).filter(k => counts[k] > 0).sort((a, b) => counts[b] - counts[a]).slice(0, targetCount);
+
+    if (topChoices.length < targetCount) {
+        // Fallback: fill with top overall frequencies that are not in excluded/input
+        const fallbackCounts = {};
+        data.forEach(row => {
+            for (let i = 1; i <= 6; i++) {
+                const val = row[`Số ${i}`];
+                if (val && !inputArray.includes(val) && !excludeNumbers.includes(val) && !topChoices.includes(val)) {
+                    fallbackCounts[val] = (fallbackCounts[val] || 0) + 1;
+                }
+            }
+        });
+        const additional = Object.keys(fallbackCounts)
+            .sort((a, b) => fallbackCounts[b] - fallbackCounts[a])
+            .slice(0, targetCount - topChoices.length);
+        topChoices.push(...additional);
     }
 
     return { error: '', numbers: topChoices.sort((a, b) => parseInt(a) - parseInt(b)) };
 }
 
 // ---- ALGORITHM 2: 4-LAYER FILTERING ----
-export function predictBy4LayerFiltering(inputNumber, activeTab, data, clientId = '') {
-    let num = inputNumber.trim();
-    if (num.length === 1) num = '0' + num;
+export function predictBy4LayerFiltering(inputArray, targetCount, activeTab, data, clientId = '', excludeNumbers = [], attemptOffset = 0) {
     const maxNum = MAX_NUMBERS[activeTab];
 
-    if (!num || isNaN(num) || parseInt(num) < 1 || parseInt(num) > maxNum) {
-        return { error: `Vui lòng nhập số từ 01 đến ${maxNum}`, numbers: [] };
+    if (!inputArray || inputArray.length === 0) {
+        return { error: `Vui lòng nhập ít nhất 1 số`, numbers: [] };
     }
 
     if (!data || data.length < 50) {
         return { error: 'Cần ít nhất 50 kỳ lịch sử để phân tích Layer 4.', numbers: [] };
     }
 
-    // 1. Pre-compute Layer 4 Data
     const lastDraw = [];
     for (let i = 1; i <= 6; i++) {
         if (data[0][`Số ${i}`]) lastDraw.push(data[0][`Số ${i}`]);
@@ -77,15 +90,13 @@ export function predictBy4LayerFiltering(inputNumber, activeTab, data, clientId 
     });
 
     const frequencyList = Object.entries(counts).map(([k, v]) => ({ num: k, freq: v })).sort((a, b) => b.freq - a.freq);
-    const hotNumbers = frequencyList.slice(0, 15).map(i => i.num); // Top 15 are "Hot"
-    const coldNumbers = frequencyList.slice(-15).map(i => i.num); // Bottom 15 are "Cold"
+    const hotNumbers = frequencyList.slice(0, 15).map(i => i.num);
+    const coldNumbers = frequencyList.slice(-15).map(i => i.num);
 
-    // Set constraint parameters based on game type
     const MIN_SUM = activeTab === 'Mega645' ? 110 : 130;
     const MAX_SUM = activeTab === 'Mega645' ? 160 : 180;
     const HIGH_THRESHOLD = activeTab === 'Mega645' ? 22 : 27;
 
-    // Create a deterministic RNG seeded by the input number, latest draw ID, and client ID
     let clientHash = 0;
     for (let i = 0; i < clientId.length; i++) {
         clientHash = (clientHash << 5) - clientHash + clientId.charCodeAt(i);
@@ -93,10 +104,12 @@ export function predictBy4LayerFiltering(inputNumber, activeTab, data, clientId 
     }
 
     const latestDrawId = data[0]['Kỳ QSMT'] ? parseInt(data[0]['Kỳ QSMT'].replace(/\D/g, '')) || data.length : data.length;
-    const seed = parseInt(num) * 100000 + latestDrawId + Math.abs(clientHash);
+    
+    // Seed incorporates attemptOffset to ensure re-rolls don't just generate the exact same ticket
+    const baseSeedNum = inputArray.length > 0 ? parseInt(inputArray[0]) : 1;
+    const seed = baseSeedNum * 100000 + latestDrawId + Math.abs(clientHash) + attemptOffset;
     const rng = mulberry32(seed);
 
-    // Helper: Pick random element from array using seeded PRNG
     const pickRandomSet = (arr, count, exclude = []) => {
         const available = arr.filter(x => !exclude.includes(x));
         const result = [];
@@ -109,45 +122,51 @@ export function predictBy4LayerFiltering(inputNumber, activeTab, data, clientId 
         return result;
     };
 
-    // 2. Monte Carlo Generation Loop (Max 1,000,000 iterations)
     const MAX_ITERATIONS = 1000000;
     let bestSet = null;
     let bestScore = -1;
+    
+    const combinedExclude = [...inputArray, ...excludeNumbers];
 
     for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
-        const candidateSet = new Set();
-        candidateSet.add(num);
+        const candidateSet = new Set(inputArray);
+        const currentExcludedForThisIter = new Set(combinedExclude);
 
-        // Pick 1 from last draw
-        const lDraw = pickRandomSet(lastDraw, 1, Array.from(candidateSet));
-        if (lDraw.length) candidateSet.add(lDraw[0]);
+        const lDraw = pickRandomSet(lastDraw, 1, Array.from(currentExcludedForThisIter));
+        if (lDraw.length) {
+            candidateSet.add(lDraw[0]);
+            currentExcludedForThisIter.add(lDraw[0]);
+        }
 
-        // Pick 1 cold number
-        const cNum = pickRandomSet(coldNumbers, 1, Array.from(candidateSet));
-        if (cNum.length) candidateSet.add(cNum[0]);
+        const cNum = pickRandomSet(coldNumbers, 1, Array.from(currentExcludedForThisIter));
+        if (cNum.length) {
+            candidateSet.add(cNum[0]);
+            currentExcludedForThisIter.add(cNum[0]);
+        }
 
-        // Pick 3 hot numbers (or however many needed to reach 6)
-        const hNums = pickRandomSet(hotNumbers, 6 - candidateSet.size, Array.from(candidateSet));
-        hNums.forEach(n => candidateSet.add(n));
+        const hNums = pickRandomSet(hotNumbers, 6 - candidateSet.size, Array.from(currentExcludedForThisIter));
+        hNums.forEach(n => {
+            candidateSet.add(n);
+            currentExcludedForThisIter.add(n);
+        });
 
-        // Fill remaining randomly if strict sets overlapped too much
         let safetyCounter = 0;
         while (candidateSet.size < 6 && safetyCounter < 100) {
             const rand = Math.floor(rng() * maxNum) + 1;
-            candidateSet.add(rand.toString().padStart(2, '0'));
+            const s = rand.toString().padStart(2, '0');
+            if (!currentExcludedForThisIter.has(s)) {
+                candidateSet.add(s);
+                currentExcludedForThisIter.add(s);
+            }
             safetyCounter++;
         }
 
         const sortedCombination = Array.from(candidateSet).sort((a, b) => parseInt(a) - parseInt(b));
-
-        // Score this combination (Lower is better, 0 is perfect)
         let penalties = 0;
 
-        // LAYER 1: Sum Range
         const sum = sortedCombination.reduce((acc, val) => acc + parseInt(val), 0);
         if (sum < MIN_SUM || sum > MAX_SUM) penalties += 10;
 
-        // LAYER 2: Even/Odd & Low/High Balance (Requires 3:3, 4:2, or 2:4)
         let evens = 0;
         let lows = 0;
         sortedCombination.forEach(val => {
@@ -158,7 +177,6 @@ export function predictBy4LayerFiltering(inputNumber, activeTab, data, clientId 
         if (evens === 0 || evens === 1 || evens === 5 || evens === 6) penalties += 5;
         if (lows === 0 || lows === 1 || lows === 5 || lows === 6) penalties += 5;
 
-        // LAYER 3: Spacing (No 3 consecutives, at least two gaps > 5)
         let maxConsecutive = 1;
         let currentConsecutive = 1;
         let largeGaps = 0;
@@ -177,27 +195,22 @@ export function predictBy4LayerFiltering(inputNumber, activeTab, data, clientId 
         if (maxConsecutive > 2) penalties += 8;
         if (largeGaps < 2) penalties += 4;
 
-        // If perfect, return immediately
         if (penalties === 0) {
-            const resultNumbers = sortedCombination.filter(x => x !== num);
+            const resultNumbers = sortedCombination.filter(x => !inputArray.includes(x));
             return { error: '', numbers: resultNumbers };
         }
 
-        // Keep track of the best one found just in case
         if (bestScore === -1 || penalties < bestScore) {
             bestScore = penalties;
             bestSet = sortedCombination;
         }
 
-        // If taking too long, start accepting slightly imperfect sets early to avoid browser freeze
-        // Relaxing after 500k iterations
         if (iter > 500000 && penalties <= 4) {
-            const resultNumbers = sortedCombination.filter(x => x !== num);
+            const resultNumbers = sortedCombination.filter(x => !inputArray.includes(x));
             return { error: '', numbers: resultNumbers };
         }
     }
 
-    // Fallback: Return best found set
-    const fallbackNumbers = bestSet.filter(x => x !== num);
+    const fallbackNumbers = bestSet.filter(x => !inputArray.includes(x));
     return { error: '', numbers: fallbackNumbers };
 }
