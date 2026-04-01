@@ -24,12 +24,14 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        {/* Google AdSense — ca-pub-9806354177150523 */}
+        {/* Xác minh sở hữu AdSense */}
+        <meta name="google-adsense-account" content="ca-pub-9806354177150523" />
+        {/* Google AdSense Script */}
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9806354177150523"
           crossOrigin="anonymous"
-          strategy="afterInteractive"
+          strategy="beforeInteractive"
         />
       </head>
       <body
