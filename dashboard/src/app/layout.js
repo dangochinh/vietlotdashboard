@@ -21,23 +21,20 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  const adsEnabled = process.env.NEXT_PUBLIC_ADS_ENABLED === 'true';
-  const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
-
   return (
     <html lang="en">
+      <head>
+        {/* Google AdSense — ca-pub-9806354177150523 */}
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9806354177150523"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {/* Google AdSense — chỉ load khi NEXT_PUBLIC_ADS_ENABLED=true */}
-        {adsEnabled && adsenseClient && (
-          <Script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseClient}`}
-            crossOrigin="anonymous"
-            strategy="afterInteractive"
-          />
-        )}
         {children}
       </body>
     </html>

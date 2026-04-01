@@ -45,6 +45,8 @@ const AFFILIATE_BANNERS = [
 // ─────────────────────────────────────────────────────────────────────────────
 // Google AdSense Unit (chờ account được duyệt)
 // ─────────────────────────────────────────────────────────────────────────────
+const ADSENSE_CLIENT = 'ca-pub-9806354177150523';
+
 function AdsenseUnit({ slot, format }) {
   const ref = useRef(null);
   useEffect(() => {
@@ -61,7 +63,7 @@ function AdsenseUnit({ slot, format }) {
       <ins
         className="adsbygoogle"
         style={{ display: 'block' }}
-        data-ad-client={process.env.NEXT_PUBLIC_ADSENSE_CLIENT}
+        data-ad-client={ADSENSE_CLIENT}
         data-ad-slot={slot}
         data-ad-format={format === 'leaderboard' ? 'horizontal' : 'rectangle'}
         data-full-width-responsive="true"
