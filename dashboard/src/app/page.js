@@ -28,7 +28,7 @@ export default function Dashboard() {
   const [viewAllModal, setViewAllModal] = useState({ open: false, title: '', type: null });
   const [predictModalOpen, setPredictModalOpen] = useState(false);
   const [inputNumber, setInputNumber] = useState('');
-  const [predictedNumbers, setPredictedNumbers] = useState([]);
+  const [tickets, setTickets] = useState([[], [], [], [], []]);
   const [predictError, setPredictError] = useState('');
   const [algorithmType, setAlgorithmType] = useState('co-occurrence');
   const [isPredicting, setIsPredicting] = useState(false);
@@ -50,72 +50,86 @@ export default function Dashboard() {
   const countdown = useCountdown(activeTab);
 
   // Prediction logic
-  const handlePredict = () => {
+  const handlePredict = (type = 'all', targetIndex = 0) => {
     setIsPredicting(true);
     setPredictError('');
-    setPredictedNumbers([]);
 
     setTimeout(() => {
-      // Clean and split input
       const rawInput = inputNumber.replace(/[^0-9]/g, ' ').trim();
       const inputArray = rawInput ? rawInput.split(/\s+/).map(n => n.padStart(2, '0')) : [];
-
+      
       const uniqueInputs = new Set(inputArray);
       if (uniqueInputs.size !== inputArray.length) {
-        setPredictError("Vui lòng không nhập các số trùng nhau");
-        setIsPredicting(false);
-        return;
+         setPredictError("Vui lòng không nhập các số trùng nhau");
+         setIsPredicting(false);
+         return;
       }
       if (inputArray.length < 1 || inputArray.length > 3) {
-        setPredictError("Vui lòng nhập từ 1 đến 3 số");
-        setIsPredicting(false);
-        return;
+         setPredictError("Vui lòng nhập từ 1 đến 3 số");
+         setIsPredicting(false);
+         return;
       }
 
       const maxNum = MAX_NUMBERS[activeTab];
       const invalidNumber = inputArray.find(n => parseInt(n) < 1 || parseInt(n) > maxNum);
       if (invalidNumber) {
-        setPredictError(`Vui lòng nhập số từ 01 đến ${maxNum}`);
-        setIsPredicting(false);
-        return;
+          setPredictError(`Vui lòng nhập số từ 01 đến ${maxNum}`);
+          setIsPredicting(false);
+          return;
       }
 
       const targetCount = 6 - inputArray.length;
+      const newTickets = [...tickets];
+      let hasError = false;
 
-      let result;
-      if (algorithmType === 'co-occurrence') {
-        result = predictByCoOccurrence(inputArray, targetCount, activeTab, data);
+      if (type === 'all') {
+          for (let i = 0; i < 5; i++) {
+              let result;
+              if (algorithmType === 'co-occurrence') {
+                  result = predictByCoOccurrence(inputArray, targetCount, activeTab, data, [], i);
+              } else {
+                  result = predictBy4LayerFiltering(inputArray, targetCount, activeTab, data, clientId, [], Date.now() + i);
+              }
+              if (!result.error) {
+                  newTickets[i] = [...inputArray, ...result.numbers].sort((a, b) => parseInt(a) - parseInt(b));
+              } else {
+                  setPredictError(result.error);
+                  hasError = true;
+                  break;
+              }
+          }
       } else {
-        result = predictBy4LayerFiltering(inputArray, targetCount, activeTab, data, clientId);
+          // single
+          let result;
+          if (algorithmType === 'co-occurrence') {
+              // use targetIndex as offset to avoid generating same ticket as others if user generates individually
+              result = predictByCoOccurrence(inputArray, targetCount, activeTab, data, [], targetIndex);
+          } else {
+              result = predictBy4LayerFiltering(inputArray, targetCount, activeTab, data, clientId, [], Date.now());
+          }
+          if (!result.error) {
+              newTickets[targetIndex] = [...inputArray, ...result.numbers].sort((a, b) => parseInt(a) - parseInt(b));
+          } else {
+              setPredictError(result.error);
+              hasError = true;
+          }
       }
 
-      setPredictError(result.error);
-      if (result.numbers) setPredictedNumbers(result.numbers);
+      if (!hasError) setTickets(newTickets);
       setIsPredicting(false);
     }, 50);
   };
 
-  const handleReroll = (indexToReroll, excludedHistory) => {
-    const rawInput = inputNumber.replace(/[^0-9]/g, ' ').trim();
-    const inputArray = rawInput ? rawInput.split(/\s+/).map(n => n.padStart(2, '0')) : [];
+  const handleUpdateTicket = (ticketIndex, newNumbers) => {
+    const newTickets = [...tickets];
+    newTickets[ticketIndex] = newNumbers;
+    setTickets(newTickets);
+  };
 
-    const otherPredicted = predictedNumbers.filter((n, i) => i !== indexToReroll);
-    const forcedArray = [...inputArray, ...otherPredicted];
-
-    let result;
-    if (algorithmType === 'co-occurrence') {
-      result = predictByCoOccurrence(forcedArray, 1, activeTab, data, excludedHistory);
-    } else {
-      result = predictBy4LayerFiltering(forcedArray, 1, activeTab, data, clientId, excludedHistory, Date.now());
-    }
-
-    if (!result.error && result.numbers.length > 0) {
-      const newNumbers = [...predictedNumbers];
-      newNumbers[indexToReroll] = result.numbers[0];
-      setPredictedNumbers(newNumbers.sort((a, b) => parseInt(a) - parseInt(b)));
-      return result.numbers[0];
-    }
-    return null;
+  const handleClearTicket = (ticketIndex) => {
+    const newTickets = [...tickets];
+    newTickets[ticketIndex] = [];
+    setTickets(newTickets);
   };
   // Computed data — uses English keys internally
   const frequencyData = useMemo(() => {
@@ -191,7 +205,7 @@ export default function Dashboard() {
           setActiveTab={setActiveTab}
           lastUpdated={lastUpdated}
           onInfoOpen={() => setInfoModalOpen(true)}
-          onPredictOpen={() => { setPredictModalOpen(true); setPredictError(''); setPredictedNumbers([]); setInputNumber(''); }}
+          onPredictOpen={() => { setPredictModalOpen(true); setPredictError(''); setTickets([[], [], [], [], []]); setInputNumber(''); }}
         />
 
         <PredictModal
@@ -201,10 +215,11 @@ export default function Dashboard() {
           data={data}
           inputNumber={inputNumber}
           setInputNumber={setInputNumber}
-          predictedNumbers={predictedNumbers}
+          tickets={tickets}
           predictError={predictError}
           onPredict={handlePredict}
-          onReroll={handleReroll}
+          onUpdateTicket={handleUpdateTicket}
+          onClearTicket={handleClearTicket}
           algorithmType={algorithmType}
           setAlgorithmType={setAlgorithmType}
           isPredicting={isPredicting}
