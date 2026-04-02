@@ -178,7 +178,7 @@ export default function PredictModal({
                                         onClick={() => handleGridToggle(strNum)}
                                         className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all transform active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${
                                             isActive 
-                                                ? (isInput ? 'bg-amber-500 text-white shadow-lg ring-2 ring-amber-300/50' : 'bg-red-500 text-white shadow-lg shadow-red-500/20 ring-2 ring-red-400/50')
+                                                ? `${parseInt(strNum) > 40 ? 'bg-red-500 shadow-red-500/20' : 'bg-blue-600 shadow-blue-500/20'} text-white shadow-lg ${isInput ? 'ring-4 ring-amber-400 ring-offset-1 ring-offset-gray-900 z-10' : 'ring-2 ring-white/30'}`
                                                 : 'bg-white text-gray-800 hover:bg-gray-200 shadow-sm'
                                         }`}
                                     >
