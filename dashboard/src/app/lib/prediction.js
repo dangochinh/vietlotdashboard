@@ -11,7 +11,7 @@ function mulberry32(a) {
 
 
 // ---- ALGORITHM 1: CO-OCCURRENCE (DEFAULT) ----
-export function predictByCoOccurrence(inputArray, targetCount, activeTab, data, excludeNumbers = []) {
+export function predictByCoOccurrence(inputArray, targetCount, activeTab, data, excludeNumbers = [], offsetIndex = 0) {
     const maxNum = MAX_NUMBERS[activeTab];
 
     if (!inputArray || inputArray.length === 0) {
@@ -25,21 +25,25 @@ export function predictByCoOccurrence(inputArray, targetCount, activeTab, data, 
         return false;
     });
 
-    if (relevantDraws.length === 0) {
+    if (relevantDraws.length === 0 && offsetIndex === 0) {
         return { error: 'Chưa có lịch sử đủ dài cho các số này.', numbers: [] };
     }
 
     const counts = {};
-    relevantDraws.forEach(row => {
-        for (let i = 1; i <= 6; i++) {
-            const val = row[`Số ${i}`];
-            if (val && !inputArray.includes(val) && !excludeNumbers.includes(val)) {
-                counts[val] = (counts[val] || 0) + 1;
+    if (relevantDraws.length > 0) {
+        relevantDraws.forEach(row => {
+            for (let i = 1; i <= 6; i++) {
+                const val = row[`Số ${i}`];
+                if (val && !inputArray.includes(val) && !excludeNumbers.includes(val)) {
+                    counts[val] = (counts[val] || 0) + 1;
+                }
             }
-        }
-    });
+        });
+    }
 
-    const topChoices = Object.keys(counts).filter(k => counts[k] > 0).sort((a, b) => counts[b] - counts[a]).slice(0, targetCount);
+    const skip = offsetIndex * targetCount;
+    const sortedKeys = Object.keys(counts).filter(k => counts[k] > 0).sort((a, b) => counts[b] - counts[a]);
+    const topChoices = sortedKeys.slice(skip, skip + targetCount);
 
     if (topChoices.length < targetCount) {
         // Fallback: fill with top overall frequencies that are not in excluded/input
@@ -52,9 +56,10 @@ export function predictByCoOccurrence(inputArray, targetCount, activeTab, data, 
                 }
             }
         });
+        const additionalSkip = Math.max(0, skip - sortedKeys.length);
         const additional = Object.keys(fallbackCounts)
             .sort((a, b) => fallbackCounts[b] - fallbackCounts[a])
-            .slice(0, targetCount - topChoices.length);
+            .slice(additionalSkip, additionalSkip + targetCount - topChoices.length);
         topChoices.push(...additional);
     }
 
