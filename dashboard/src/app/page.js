@@ -59,25 +59,25 @@ export default function Dashboard() {
       // Clean and split input
       const rawInput = inputNumber.replace(/[^0-9]/g, ' ').trim();
       const inputArray = rawInput ? rawInput.split(/\s+/).map(n => n.padStart(2, '0')) : [];
-      
+
       const uniqueInputs = new Set(inputArray);
       if (uniqueInputs.size !== inputArray.length) {
-         setPredictError("Vui lòng không nhập các số trùng nhau");
-         setIsPredicting(false);
-         return;
+        setPredictError("Vui lòng không nhập các số trùng nhau");
+        setIsPredicting(false);
+        return;
       }
       if (inputArray.length < 1 || inputArray.length > 3) {
-         setPredictError("Vui lòng nhập từ 1 đến 3 số");
-         setIsPredicting(false);
-         return;
+        setPredictError("Vui lòng nhập từ 1 đến 3 số");
+        setIsPredicting(false);
+        return;
       }
 
       const maxNum = MAX_NUMBERS[activeTab];
       const invalidNumber = inputArray.find(n => parseInt(n) < 1 || parseInt(n) > maxNum);
       if (invalidNumber) {
-          setPredictError(`Vui lòng nhập số từ 01 đến ${maxNum}`);
-          setIsPredicting(false);
-          return;
+        setPredictError(`Vui lòng nhập số từ 01 đến ${maxNum}`);
+        setIsPredicting(false);
+        return;
       }
 
       const targetCount = 6 - inputArray.length;
@@ -98,10 +98,10 @@ export default function Dashboard() {
   const handleReroll = (indexToReroll, excludedHistory) => {
     const rawInput = inputNumber.replace(/[^0-9]/g, ' ').trim();
     const inputArray = rawInput ? rawInput.split(/\s+/).map(n => n.padStart(2, '0')) : [];
-    
+
     const otherPredicted = predictedNumbers.filter((n, i) => i !== indexToReroll);
     const forcedArray = [...inputArray, ...otherPredicted];
-    
+
     let result;
     if (algorithmType === 'co-occurrence') {
       result = predictByCoOccurrence(forcedArray, 1, activeTab, data, excludedHistory);
@@ -112,7 +112,7 @@ export default function Dashboard() {
     if (!result.error && result.numbers.length > 0) {
       const newNumbers = [...predictedNumbers];
       newNumbers[indexToReroll] = result.numbers[0];
-      setPredictedNumbers(newNumbers.sort((a,b) => parseInt(a) - parseInt(b)));
+      setPredictedNumbers(newNumbers.sort((a, b) => parseInt(a) - parseInt(b)));
       return result.numbers[0];
     }
     return null;

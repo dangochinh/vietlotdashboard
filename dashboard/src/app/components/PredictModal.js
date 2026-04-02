@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Wand2, X, AlertCircle, Send, Loader2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Wand2, X, AlertCircle, Send, Loader2, Copy, Check } from 'lucide-react';
 import Ball from './Ball';
 
 export default function PredictModal({
@@ -10,6 +10,18 @@ export default function PredictModal({
 }) {
     const [spinningIndex, setSpinningIndex] = useState(-1);
     const [excludedHistory, setExcludedHistory] = useState([]);
+    const [copied, setCopied] = useState(false);
+    const inputRef = useRef(null);
+
+    useEffect(() => {
+        if (isOpen && inputRef.current) {
+            // Slight delay ensures the UI is painted before grabbing focus
+            const timer = setTimeout(() => {
+                inputRef.current.focus();
+            }, 50);
+            return () => clearTimeout(timer);
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -38,6 +50,18 @@ export default function PredictModal({
             onReroll(idx, newExcluded);
             setSpinningIndex(-1);
         }, 400);
+    };
+
+    const handleCopy = () => {
+        const inputArray = inputNumber.trim().split(/\s+/).filter(Boolean).map(n => n.padStart(2, '0'));
+        const allNums = [...inputArray, ...predictedNumbers].sort((a, b) => parseInt(a) - parseInt(b));
+        const code = activeTab === 'Mega645' ? '645' : '655';
+        const smsBody = `${code} K1 S ${allNums.join(' ')}`;
+        
+        navigator.clipboard.writeText(smsBody).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
     };
 
     return (
@@ -79,13 +103,14 @@ export default function PredictModal({
 
                 <div className="flex gap-3 mb-4">
                     <input
+                        ref={inputRef}
                         type="text"
                         inputMode="numeric"
                         value={inputNumber}
                         onChange={handleInputChange}
                         onKeyDown={(e) => e.key === 'Enter' && handlePredictClick()}
-                        placeholder="Nhập tối đa 3 số (vd: 05 12 20)"
-                        className="flex-1 min-w-0 w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all font-mono text-base md:text-lg text-center tracking-widest"
+                        placeholder="Nhập tối đa 3 số (vd: 05 12)"
+                        className="flex-1 min-w-0 w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:placeholder-transparent transition-all font-mono text-sm md:text-base text-center tracking-wide"
                     />
                     <button onClick={handlePredictClick} disabled={isPredicting} className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-bold shadow-lg transition-colors flex items-center justify-center gap-2 min-w-[90px]">
                         {isPredicting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Tìm'}
@@ -144,7 +169,30 @@ export default function PredictModal({
                             <Send className="w-5 h-5" />
                             Mua Vé Ngay Qua SMS
                         </button>
-                        <p className="text-center text-[10px] text-gray-500 mt-2">Tính năng tạo tự động cú pháp gửi đến 9969 (Đại lý Vietlott SMS)</p>
+                        <div className="flex items-center gap-2 mt-3">
+                            <div className="flex-1 h-px bg-gray-800"></div>
+                            <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Hoặc copy cú pháp</span>
+                            <div className="flex-1 h-px bg-gray-800"></div>
+                        </div>
+                        <button
+                            onClick={handleCopy}
+                            className={`w-full mt-3 flex items-center justify-center gap-2 px-6 py-2.5 border rounded-xl font-bold transition-all ${copied 
+                                ? 'bg-emerald-500/10 border-emerald-500 text-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.1)]' 
+                                : 'bg-gray-800 hover:bg-gray-700 border-gray-700 text-gray-300'}`}
+                        >
+                            {copied ? (
+                                <>
+                                    <Check className="w-4 h-4" />
+                                    Đã sao chép!
+                                </>
+                            ) : (
+                                <>
+                                    <Copy className="w-4 h-4" />
+                                    Sao chép cú pháp SMS
+                                </>
+                            )}
+                        </button>
+                        <p className="text-center text-[10px] text-gray-500 mt-2">Gửi cú pháp trên đến tổng đài 9969 (Vietlott SMS)</p>
                     </div>
                 )}
             </div>
