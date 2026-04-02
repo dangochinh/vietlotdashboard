@@ -33,6 +33,7 @@ export default function InfoModal({ isOpen, onClose }) {
                             <Rocket className="w-4 h-4" /> Bản Cập Nhật
                         </h3>
                         <div className="text-xs text-slate-400 space-y-2 font-mono leading-relaxed">
+                            <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-04-02</span> Nâng cấp tính năng Dự Đoán: Hỗ trợ tạo siêu tốc 5 vé cùng lúc, tinh chỉnh số trực tiếp trên Lưới (Grid), và gộp cú pháp mua SMS.</p>
                             <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-26</span> Refactor toàn bộ kiến trúc: tách components, thêm SWR caching, cheerio parser. Thêm charts: Cold Numbers, Even/Odd Pie, Sum Scatter.</p>
                             <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-26</span> Thêm Thẻ hiển thị Giá Trị Jackpot Ước Tính và Bộ Đếm Ngược Kỳ Xổ Tiếp Theo.</p>
                             <p><span className="text-emerald-400 font-bold border border-emerald-500/30 bg-emerald-900/20 px-1 rounded">2026-02-25</span> Thêm Modal Xem Tất Cả (full list) kèm Progress Bar trực quan.</p>
