@@ -4,7 +4,7 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import { MAX_NUMBERS } from './lib/constants';
 import { useVietlottData } from './hooks/useVietlottData';
 import { useCountdown } from './hooks/useCountdown';
-import { predictByCoOccurrence, predictBy4LayerFiltering } from './lib/prediction';
+
 
 import Header from './components/Header';
 import JackpotCard from './components/JackpotCard';
@@ -15,7 +15,7 @@ import TriosChart from './components/TriosChart';
 import ColdNumbersChart from './components/ColdNumbersChart';
 import EvenOddPie from './components/EvenOddPie';
 import SumScatter from './components/SumScatter';
-import PredictModal from './components/PredictModal';
+
 import ViewAllModal from './components/ViewAllModal';
 import InfoModal from './components/InfoModal';
 import AdBanner from './components/AdBanner';
@@ -26,111 +26,14 @@ export default function Dashboard() {
   // Modal States
   const [infoModalOpen, setInfoModalOpen] = useState(false);
   const [viewAllModal, setViewAllModal] = useState({ open: false, title: '', type: null });
-  const [predictModalOpen, setPredictModalOpen] = useState(false);
-  const [inputNumber, setInputNumber] = useState('');
-  const [tickets, setTickets] = useState([[], [], [], [], []]);
-  const [predictError, setPredictError] = useState('');
-  const [algorithmType, setAlgorithmType] = useState('co-occurrence');
-  const [isPredicting, setIsPredicting] = useState(false);
-  const [clientId] = useState(() => {
-    if (typeof window !== 'undefined') {
-      let id = localStorage.getItem('vietlott_client_id');
-      if (!id) {
-        id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        localStorage.setItem('vietlott_client_id', id);
-      }
-      return id;
-    }
-    return '';
-  });
+
 
 
   // Data hooks
   const { data, loading, error, jackpotData, lastUpdated } = useVietlottData(activeTab);
   const countdown = useCountdown(activeTab);
 
-  // Prediction logic
-  const handlePredict = (type = 'all', targetIndex = 0) => {
-    setIsPredicting(true);
-    setPredictError('');
 
-    setTimeout(() => {
-      const rawInput = inputNumber.replace(/[^0-9]/g, ' ').trim();
-      const inputArray = rawInput ? rawInput.split(/\s+/).map(n => n.padStart(2, '0')) : [];
-      
-      const uniqueInputs = new Set(inputArray);
-      if (uniqueInputs.size !== inputArray.length) {
-         setPredictError("Vui lòng không nhập các số trùng nhau");
-         setIsPredicting(false);
-         return;
-      }
-      if (inputArray.length < 1 || inputArray.length > 3) {
-         setPredictError("Vui lòng nhập từ 1 đến 3 số");
-         setIsPredicting(false);
-         return;
-      }
-
-      const maxNum = MAX_NUMBERS[activeTab];
-      const invalidNumber = inputArray.find(n => parseInt(n) < 1 || parseInt(n) > maxNum);
-      if (invalidNumber) {
-          setPredictError(`Vui lòng nhập số từ 01 đến ${maxNum}`);
-          setIsPredicting(false);
-          return;
-      }
-
-      const targetCount = 6 - inputArray.length;
-      const newTickets = [...tickets];
-      let hasError = false;
-
-      if (type === 'all') {
-          for (let i = 0; i < 5; i++) {
-              let result;
-              if (algorithmType === 'co-occurrence') {
-                  result = predictByCoOccurrence(inputArray, targetCount, activeTab, data, [], i);
-              } else {
-                  result = predictBy4LayerFiltering(inputArray, targetCount, activeTab, data, clientId, [], Date.now() + i);
-              }
-              if (!result.error) {
-                  newTickets[i] = [...inputArray, ...result.numbers].sort((a, b) => parseInt(a) - parseInt(b));
-              } else {
-                  setPredictError(result.error);
-                  hasError = true;
-                  break;
-              }
-          }
-      } else {
-          // single
-          let result;
-          if (algorithmType === 'co-occurrence') {
-              // use targetIndex as offset to avoid generating same ticket as others if user generates individually
-              result = predictByCoOccurrence(inputArray, targetCount, activeTab, data, [], targetIndex);
-          } else {
-              result = predictBy4LayerFiltering(inputArray, targetCount, activeTab, data, clientId, [], Date.now());
-          }
-          if (!result.error) {
-              newTickets[targetIndex] = [...inputArray, ...result.numbers].sort((a, b) => parseInt(a) - parseInt(b));
-          } else {
-              setPredictError(result.error);
-              hasError = true;
-          }
-      }
-
-      if (!hasError) setTickets(newTickets);
-      setIsPredicting(false);
-    }, 50);
-  };
-
-  const handleUpdateTicket = (ticketIndex, newNumbers) => {
-    const newTickets = [...tickets];
-    newTickets[ticketIndex] = newNumbers;
-    setTickets(newTickets);
-  };
-
-  const handleClearTicket = (ticketIndex) => {
-    const newTickets = [...tickets];
-    newTickets[ticketIndex] = [];
-    setTickets(newTickets);
-  };
   // Computed data — uses English keys internally
   const frequencyData = useMemo(() => {
     if (!data || data.length === 0) return { top15: [], full: [] };
@@ -205,25 +108,9 @@ export default function Dashboard() {
           setActiveTab={setActiveTab}
           lastUpdated={lastUpdated}
           onInfoOpen={() => setInfoModalOpen(true)}
-          onPredictOpen={() => { setPredictModalOpen(true); setPredictError(''); setTickets([[], [], [], [], []]); setInputNumber(''); }}
         />
 
-        <PredictModal
-          isOpen={predictModalOpen}
-          onClose={() => setPredictModalOpen(false)}
-          activeTab={activeTab}
-          data={data}
-          inputNumber={inputNumber}
-          setInputNumber={setInputNumber}
-          tickets={tickets}
-          predictError={predictError}
-          onPredict={handlePredict}
-          onUpdateTicket={handleUpdateTicket}
-          onClearTicket={handleClearTicket}
-          algorithmType={algorithmType}
-          setAlgorithmType={setAlgorithmType}
-          isPredicting={isPredicting}
-        />
+
 
         {loading ? (
           <div className="flex justify-center items-center h-64">

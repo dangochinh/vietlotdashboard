@@ -1,6 +1,7 @@
+import Link from 'next/link';
 import { Info, Wand2 } from 'lucide-react';
 
-export default function Header({ activeTab, setActiveTab, lastUpdated, onInfoOpen, onPredictOpen }) {
+export default function Header({ activeTab, setActiveTab, lastUpdated, onInfoOpen }) {
     return (
         <header className="flex flex-col md:flex-row items-center justify-between border-b border-gray-800 pb-3 md:pb-4 sticky top-0 z-50 bg-[#0E1217]/95 backdrop-blur-xl pt-3 md:pt-4 shadow-2xl rounded-b-xl md:rounded-b-2xl px-4 -mx-4 mb-4">
             <div className="text-center md:text-left w-full md:w-auto">
@@ -38,13 +39,13 @@ export default function Header({ activeTab, setActiveTab, lastUpdated, onInfoOpe
                     <Info className="w-4 h-4 md:w-4 md:h-4" />
                     <span className="inline">Giới Thiệu</span>
                 </button>
-                <button
-                    onClick={onPredictOpen}
+                <Link
+                    href="/predict"
                     className="flex-1 md:flex-none flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-indigo-500/30 border border-indigo-400/30 text-xs md:text-sm"
                 >
                     <Wand2 className="w-4 h-4 md:w-4 md:h-4" />
                     Dự Đoán
-                </button>
+                </Link>
             </div>
         </header>
     );
