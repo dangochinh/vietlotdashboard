@@ -11,7 +11,7 @@ export default function Header({ activeTab, setActiveTab, lastUpdated, onInfoOpe
                 <p className="text-gray-400 mt-1 md:mt-2 text-xs md:text-sm hidden md:block">Real-time statistics &amp; drawn frequency dashboard</p>
                 {lastUpdated && (
                     <p className="text-emerald-400/80 mt-1.5 md:mt-2 text-[10px] md:text-xs font-mono bg-emerald-900/20 inline-block px-1.5 md:px-2 py-0.5 rounded border border-emerald-800/30">
-                        ⏱ Dữ liệu đồng bộ lần cuối (GitHub): {lastUpdated}
+                        ⏱ Dữ liệu đồng bộ lần cuối (Hệ thống): {lastUpdated}
                     </p>
                 )}
             </div>
