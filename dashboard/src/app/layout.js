@@ -15,9 +15,16 @@ const geistMono = Geist_Mono({
 export const metadata = {
   title: "Vietlott Dashboard - Phân Tích & Dự Đoán Xổ Số",
   description: "Trang tổng hợp thống kê, dự đoán và phân tích tần suất xổ số Vietlott (Mega 6/45, Power 6/55) tự động cập nhật mỗi ngày. Cung cấp bộ số đẹp, soi cầu nhanh chuẩn xác.",
+  manifest: "/manifest.json",
   keywords: ["Vietlott", "Mega 6/45", "Power 6/55", "Xổ số", "Dự đoán Vietlott", "Thống kê Vietlott", "KQXS Vietlott", "Vietlott Dashboard", "Phân tích xổ số"],
   authors: [{ name: "Vietlott Dashboard" }],
   creator: "Vietlott Dashboard",
+  themeColor: "#0E1217", // Ensure splash screen and address bar match the theme
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Vietlott Dashboard",
+  },
   openGraph: {
     title: "Vietlott Dashboard - Phân Tích & Dự Đoán Xổ Số",
     description: "Công cụ thống kê, dự đoán và phân tích tần suất xổ số Vietlott trực quan. Giao diện nhanh, đẹp, dữ liệu cập nhật liên tục.",
@@ -41,9 +48,9 @@ export const metadata = {
     images: ["/og-image.png"],
   },
   icons: {
-    icon: "/og-image.png",
-    shortcut: "/og-image.png",
-    apple: "/og-image.png",
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/apple-icon.png",
   },
 };
 

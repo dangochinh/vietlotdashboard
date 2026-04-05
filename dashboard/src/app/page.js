@@ -46,7 +46,7 @@ export default function Dashboard() {
       if (activeTab === 'Power655' && row['Số Đặc Biệt']) counts[row['Số Đặc Biệt']] = (counts[row['Số Đặc Biệt']] || 0) + 1;
     });
     const formatted = Object.keys(counts).map(key => ({ name: key, frequency: counts[key] })).sort((a, b) => b.frequency - a.frequency);
-    const sequential = Object.keys(counts).map(key => ({ name: key, frequency: counts[key] })).sort((a, b) => parseInt(a) - parseInt(b));
+    const sequential = Object.keys(counts).map(key => ({ name: key, frequency: counts[key] })).sort((a, b) => parseInt(a.name) - parseInt(b.name));
     return { top15: formatted.slice(0, 15), full: formatted, sequential };
   }, [data, activeTab]);
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import { Activity, Maximize2, X } from 'lucide-react';
 import { TOOLTIP_STYLE } from '../lib/constants';
 
@@ -11,41 +11,76 @@ export default function FullFrequencyChart({ data }) {
     const sortedVals = [...data.sequential].map(d => d.frequency).sort((a, b) => b - a);
     const threshold = sortedVals[4] || 0; 
 
-    const ChartComponent = ({ height = '100%', isModal = false }) => (
-        <ResponsiveContainer width="100%" height={height}>
-            <BarChart 
-                data={data.sequential} 
-                margin={{ top: 10, right: 10, left: -20, bottom: 20 }}
-            >
-                <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                <XAxis 
-                    dataKey="name" 
-                    stroke="#888" 
-                    tickLine={false} 
-                    axisLine={false} 
-                    interval={0} 
-                    tick={{ fontSize: isModal ? 12 : 10 }}
-                    height={30}
-                />
-                <YAxis stroke="#888" tickLine={false} axisLine={false} />
-                <Tooltip
-                    cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                    {...TOOLTIP_STYLE}
-                    itemStyle={{ color: '#f97316' }}
-                />
-                <Bar 
-                    dataKey="frequency" 
-                    name="Số lần" 
-                    radius={[4, 4, 0, 0]}
-                    isAnimationActive={false} // Disable animation to prevent "jumping" effect on load/tab switch
+    const ChartComponent = ({ height = '100%', isModal = false }) => {
+        const isVertical = isModal;
+
+        return (
+            <ResponsiveContainer width="100%" height={height}>
+                <BarChart 
+                    layout={isVertical ? "vertical" : "horizontal"}
+                    data={data.sequential} 
+                    margin={isVertical 
+                        ? { top: 10, right: 40, left: 0, bottom: 10 } 
+                        : { top: 10, right: 10, left: -20, bottom: 20 }
+                    }
                 >
-                    {data.sequential.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.frequency >= threshold ? '#ea580c' : '#334155'} />
-                    ))}
-                </Bar>
-            </BarChart>
-        </ResponsiveContainer>
-    );
+                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={!isVertical} horizontal={isVertical} />
+                    {isVertical ? (
+                        <>
+                            <XAxis type="number" stroke="#888" tickLine={false} axisLine={false} hide />
+                            <YAxis 
+                                dataKey="name" 
+                                type="category" 
+                                stroke="#ccc" 
+                                tickLine={false} 
+                                axisLine={false} 
+                                width={35}
+                                tick={{ fontSize: 13, fontWeight: 'bold' }}
+                            />
+                        </>
+                    ) : (
+                        <>
+                            <XAxis 
+                                dataKey="name" 
+                                stroke="#888" 
+                                tickLine={false} 
+                                axisLine={false} 
+                                interval={0} 
+                                tick={{ fontSize: 10 }}
+                                height={30}
+                            />
+                            <YAxis stroke="#888" tickLine={false} axisLine={false} />
+                        </>
+                    )}
+                    <Tooltip
+                        cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                        {...TOOLTIP_STYLE}
+                        itemStyle={{ color: '#f97316' }}
+                    />
+                    <Bar 
+                        dataKey="frequency" 
+                        name="Số lần" 
+                        radius={isVertical ? [0, 4, 4, 0] : [4, 4, 0, 0]}
+                        isAnimationActive={false}
+                    >
+                        {data.sequential.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.frequency >= threshold ? '#ea580c' : '#334155'} />
+                        ))}
+                        {isVertical && (
+                            <LabelList 
+                                dataKey="frequency" 
+                                position="right" 
+                                fill="#94a3b8" 
+                                fontSize={12} 
+                                offset={10}
+                                fontWeight="bold"
+                            />
+                        )}
+                    </Bar>
+                </BarChart>
+            </ResponsiveContainer>
+        );
+    };
 
     return (
         <div className="bg-gray-900/40 rounded-3xl p-4 md:p-6 border border-gray-800 shadow-xl flex flex-col mt-8">
@@ -86,37 +121,37 @@ export default function FullFrequencyChart({ data }) {
                 <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Tần suất cao nhất (Top 5)</span>
             </div>
 
-            {/* Fullscreen Modal with Landscape Rotation Feature */}
+            {/* Fullscreen Modal - Native Vertical Layout for Mobile */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-[9999] bg-[#0E1217] flex flex-col animate-in fade-in duration-300">
-                    {/* Rotate container for mobile portrait */}
-                    <div className="flex-1 flex flex-col p-4 md:p-8 md:rotate-0 h-full w-full max-sm:portrait:rotate-90 max-sm:portrait:w-[100vh] max-sm:portrait:h-[100vw] max-sm:portrait:fixed max-sm:portrait:top-1/2 max-sm:portrait:left-1/2 max-sm:portrait:-translate-x-1/2 max-sm:portrait:-translate-y-1/2 max-sm:portrait:origin-center bg-[#0E1217]">
-                        
-                        <div className="flex items-center justify-between mb-6 md:mb-8">
-                            <div className="flex items-center gap-3">
-                                <Activity className="w-6 h-6 text-orange-500" />
-                                <div>
-                                    <h2 className="text-lg md:text-2xl font-bold text-white">Toàn bộ Tần suất Số</h2>
-                                    <p className="text-gray-400 text-xs md:text-sm">Xem chi tiết các số từ 01 đến {data.sequential.length}</p>
-                                </div>
+                <div className="fixed inset-0 z-[9999] bg-[#0E1217] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+                    <div className="flex items-center justify-between p-4 md:p-8 border-b border-gray-800/50 bg-[#0E1217]/80 backdrop-blur-md sticky top-0 z-10">
+                        <div className="flex items-center gap-3">
+                            <Activity className="w-6 h-6 text-orange-500" />
+                            <div>
+                                <h2 className="text-lg md:text-2xl font-bold text-white">Toàn bộ Tần suất Số</h2>
+                                <p className="text-gray-400 text-xs md:text-sm">Danh sách tần suất từ 01 đến {data.sequential.length}</p>
                             </div>
-                            <button 
-                                onClick={() => setIsModalOpen(false)}
-                                className="p-2 md:p-3 bg-gray-800 hover:bg-red-900/40 text-gray-300 hover:text-red-400 rounded-2xl transition-all border border-gray-700"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
                         </div>
+                        <button 
+                            onClick={() => setIsModalOpen(false)}
+                            className="p-2 md:p-3 bg-gray-800 hover:bg-red-900/40 text-gray-300 hover:text-red-400 rounded-2xl transition-all border border-gray-700"
+                        >
+                            <X className="w-6 h-6" />
+                        </button>
+                    </div>
 
-                        <div className="flex-1 overflow-x-auto overflow-y-hidden pb-8 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900/20 px-2">
-                            <div className="h-full" style={{ minWidth: Math.max(1000, data.sequential.length * (isModalOpen ? 30 : 28)) + 'px' }}>
-                                <ChartComponent height="100%" isModal={true} />
-                            </div>
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-2 md:p-8 custom-scrollbar">
+                        {/* 
+                            On mobile, we use a vertical chart that stretches vertically. 
+                            This is much more stable than CSS rotation and handles all touch gestures perfectly.
+                        */}
+                        <div style={{ height: Math.max(800, data.sequential.length * 35) + 'px' }} className="w-full max-w-4xl mx-auto">
+                            <ChartComponent height="100%" isModal={true} />
                         </div>
-                        
-                        <div className="mt-4 text-center text-gray-500 text-[10px] md:text-sm font-medium">
-                             &larr; Vuốt sang ngang để xem thêm &rarr; {isModalOpen && <span className="hidden max-sm:portrait:inline ml-2">(Chế độ màn hình ngang tối ưu)</span>}
-                        </div>
+                    </div>
+                    
+                    <div className="p-4 bg-gray-900/20 text-center text-gray-500 text-xs font-medium border-t border-gray-800/50">
+                         &uarr; Vuốt lên/xuống để xem toàn bộ danh sách &darr;
                     </div>
                 </div>
             )}
