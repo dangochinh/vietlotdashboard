@@ -30,7 +30,7 @@ export default function PairsChart({ data, onViewAll }) {
                             {...TOOLTIP_STYLE}
                             itemStyle={{ color: CHART_COLORS.pairs.top }}
                         />
-                        <Bar dataKey="frequency" radius={[0, 4, 4, 0]}>
+                        <Bar dataKey="frequency" name="Số lần" radius={[0, 4, 4, 0]}>
                             {data.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={index < 3 ? CHART_COLORS.pairs.top : CHART_COLORS.pairs.rest} />
                             ))}

@@ -30,7 +30,7 @@ export default function FrequencyChart({ data, onViewAll }) {
                             {...TOOLTIP_STYLE}
                             itemStyle={{ color: CHART_COLORS.frequency.top }}
                         />
-                        <Bar dataKey="frequency" radius={[4, 4, 0, 0]}>
+                        <Bar dataKey="frequency" name="Số lần" radius={[4, 4, 0, 0]}>
                             {data.top15.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={index < 3 ? CHART_COLORS.frequency.top : CHART_COLORS.frequency.rest} />
                             ))}
