@@ -11,6 +11,7 @@ import JackpotCard from './components/JackpotCard';
 import FrequencyChart from './components/FrequencyChart';
 import HistoryTable from './components/HistoryTable';
 import PairsChart from './components/PairsChart';
+import FullFrequencyChart from './components/FullFrequencyChart';
 import TriosChart from './components/TriosChart';
 import ColdNumbersChart from './components/ColdNumbersChart';
 import EvenOddPie from './components/EvenOddPie';
@@ -45,7 +46,8 @@ export default function Dashboard() {
       if (activeTab === 'Power655' && row['Số Đặc Biệt']) counts[row['Số Đặc Biệt']] = (counts[row['Số Đặc Biệt']] || 0) + 1;
     });
     const formatted = Object.keys(counts).map(key => ({ name: key, frequency: counts[key] })).sort((a, b) => b.frequency - a.frequency);
-    return { top15: formatted.slice(0, 15), full: formatted };
+    const sequential = Object.keys(counts).map(key => ({ name: key, frequency: counts[key] })).sort((a, b) => parseInt(a) - parseInt(b));
+    return { top15: formatted.slice(0, 15), full: formatted, sequential };
   }, [data, activeTab]);
 
   const { pairData, trioData, pairDataFull, trioDataFull } = useMemo(() => {
@@ -138,8 +140,11 @@ export default function Dashboard() {
               <HistoryTable data={data} activeTab={activeTab} />
             </div>
 
+            {/* Full Frequency Chart (Sequential) */}
+            <FullFrequencyChart data={frequencyData} />
+
             {/* Grid 2: Pairs + Trios */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
               <PairsChart data={pairData} onViewAll={setViewAllModal} />
               <TriosChart data={trioData} onViewAll={setViewAllModal} />
             </div>
