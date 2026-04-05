@@ -76,7 +76,7 @@ export default function Dashboard() {
     }
     Object.keys(lastSeen).forEach(k => { if (lastSeen[k] === -1) lastSeen[k] = data.length; });
     const formatted = Object.keys(lastSeen).map(k => ({ name: k, drawsAbsent: lastSeen[k] })).sort((a, b) => b.drawsAbsent - a.drawsAbsent);
-    return { top15: formatted.slice(0, 15), full: [...formatted].sort((a, b) => a.drawsAbsent - b.drawsAbsent) };
+    return { top15: formatted.slice(0, 15), full: formatted };
   }, [data, activeTab]);
 
   const evenOddData = useMemo(() => {

@@ -30,7 +30,7 @@ export default function TriosChart({ data, onViewAll }) {
                             {...TOOLTIP_STYLE}
                             itemStyle={{ color: CHART_COLORS.trios.top }}
                         />
-                        <Bar dataKey="frequency" radius={[0, 4, 4, 0]}>
+                        <Bar dataKey="frequency" name="Số lần" radius={[0, 4, 4, 0]}>
                             {data.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={index < 3 ? CHART_COLORS.trios.top : CHART_COLORS.trios.rest} />
                             ))}
