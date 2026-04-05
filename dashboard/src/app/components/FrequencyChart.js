@@ -23,7 +23,7 @@ export default function FrequencyChart({ data, onViewAll }) {
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data.top15} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                        <XAxis dataKey="name" stroke="#888" tickLine={false} axisLine={false} />
+                        <XAxis dataKey="name" stroke="#888" tickLine={false} axisLine={false} interval={0} tick={{ fontSize: 11 }} />
                         <YAxis stroke="#888" tickLine={false} axisLine={false} />
                         <Tooltip
                             cursor={{ fill: 'rgba(255,255,255,0.05)' }}
