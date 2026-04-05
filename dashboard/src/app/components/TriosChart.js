@@ -24,7 +24,7 @@ export default function TriosChart({ data, onViewAll }) {
                     <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} layout="vertical">
                         <CartesianGrid strokeDasharray="3 3" stroke="#333" horizontal={false} />
                         <XAxis type="number" stroke="#888" tickLine={false} axisLine={false} />
-                        <YAxis dataKey="name" type="category" stroke="#888" tickLine={false} axisLine={false} width={120} />
+                        <YAxis dataKey="name" type="category" stroke="#888" tickLine={false} axisLine={false} width={120} interval={0} tick={{ fontSize: 11 }} />
                         <Tooltip
                             cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                             {...TOOLTIP_STYLE}
