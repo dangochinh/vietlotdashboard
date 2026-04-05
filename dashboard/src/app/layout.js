@@ -13,11 +13,38 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Vietlott Dashboard - Thay phân đổi thận",
-  description: "Trang tổng hợp thống kê và phân tích tần suất xổ số Vietlott tự động cập nhật.",
+  title: "Vietlott Dashboard - Phân Tích & Dự Đoán Xổ Số",
+  description: "Trang tổng hợp thống kê, dự đoán và phân tích tần suất xổ số Vietlott (Mega 6/45, Power 6/55) tự động cập nhật mỗi ngày. Cung cấp bộ số đẹp, soi cầu nhanh chuẩn xác.",
+  keywords: ["Vietlott", "Mega 6/45", "Power 6/55", "Xổ số", "Dự đoán Vietlott", "Thống kê Vietlott", "KQXS Vietlott", "Vietlott Dashboard", "Phân tích xổ số"],
+  authors: [{ name: "Vietlott Dashboard" }],
+  creator: "Vietlott Dashboard",
+  openGraph: {
+    title: "Vietlott Dashboard - Phân Tích & Dự Đoán Xổ Số",
+    description: "Công cụ thống kê, dự đoán và phân tích tần suất xổ số Vietlott trực quan. Giao diện nhanh, đẹp, dữ liệu cập nhật liên tục.",
+    url: "https://vietlott-dashboard.vercel.app",
+    siteName: "Vietlott Dashboard",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1024,
+        height: 1024,
+        alt: "Vietlott Dashboard Logo",
+      },
+    ],
+    locale: "vi_VN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Vietlott Dashboard - Cập nhật liên tục",
+    description: "Xem tần suất vắng mặt, cặp số hot nhất hiện tại và tự động sinh vé Vietlott cực chuẩn.",
+    images: ["/og-image.png"],
+  },
   icons: {
-    icon: "https://vietlott.vn/images/Logo-Vietlott.png",
-  }
+    icon: "/og-image.png",
+    shortcut: "/og-image.png",
+    apple: "/og-image.png",
+  },
 };
 
 export default function RootLayout({ children }) {
