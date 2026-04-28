@@ -128,6 +128,8 @@ def update_worksheet(worksheet, results):
         # ID is usually index 0 in the row, e.g. "Kỳ 01492 | 03/04/2026"
         existing_ids = set()
         for row in existing_records:
+            if not row or not row[0]:  # Skip empty rows
+                continue
             match = re.search(r'(\d+)', row[0])
             if match:
                 existing_ids.add(match.group(1).zfill(5))
