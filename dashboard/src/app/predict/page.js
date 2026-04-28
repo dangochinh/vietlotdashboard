@@ -1,20 +1,20 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Wand2, AlertCircle, Loader2, Trash2, ArrowDown, RefreshCw, Send, ArrowLeft } from 'lucide-react';
+import { Wand2, AlertCircle, Loader2, Trash2, ArrowDown, RefreshCw, Send, ArrowLeft, Shield } from 'lucide-react';
 import Ball from '../components/Ball';
 import { MAX_NUMBERS } from '../lib/constants';
 import { useVietlottData } from '../hooks/useVietlottData';
-import { predictByCoOccurrence, predictBy4LayerFiltering } from '../lib/prediction';
+import { predictCoverageMulti, predictCoverageSingle, calculateCoverage } from '../lib/prediction';
 
 export default function PredictPage() {
     const [activeTab, setActiveTab] = useState('Mega645');
     const [inputNumber, setInputNumber] = useState('');
     const [tickets, setTickets] = useState([[], [], [], [], []]);
     const [predictError, setPredictError] = useState('');
-    const [algorithmType, setAlgorithmType] = useState('co-occurrence');
     const [isPredicting, setIsPredicting] = useState(false);
     const [activeTicketIndex, setActiveTicketIndex] = useState(0);
+    const [coverage, setCoverage] = useState(null);
     const inputRef = useRef(null);
 
     const [clientId] = useState(() => {
@@ -37,6 +37,7 @@ export default function PredictPage() {
         setPredictError('');
         setInputNumber('');
         setActiveTicketIndex(0);
+        setCoverage(null);
     }, [activeTab]);
 
     useEffect(() => {
@@ -45,6 +46,17 @@ export default function PredictPage() {
         }
     }, []);
 
+    // Update coverage whenever tickets change
+    useEffect(() => {
+        const maxNum = MAX_NUMBERS[activeTab];
+        const validTickets = tickets.filter(t => t && t.length === 6);
+        if (validTickets.length > 0) {
+            setCoverage(calculateCoverage(validTickets, maxNum));
+        } else {
+            setCoverage(null);
+        }
+    }, [tickets, activeTab]);
+
     const handleInputChange = (e) => {
         let val = e.target.value.replace(/\D/g, '');
         if (val.length > 6) val = val.slice(0, 6);
@@ -52,70 +64,73 @@ export default function PredictPage() {
         setInputNumber(formatted);
     };
 
+    const parseInput = () => {
+        const rawInput = inputNumber.replace(/[^0-9]/g, ' ').trim();
+        return rawInput ? rawInput.split(/\s+/).map(n => n.padStart(2, '0')) : [];
+    };
+
+    const validateInput = (inputArray) => {
+        const uniqueInputs = new Set(inputArray);
+        if (uniqueInputs.size !== inputArray.length) {
+            return "Vui lòng không nhập các số trùng nhau";
+        }
+        if (inputArray.length < 1 || inputArray.length > 3) {
+            return "Vui lòng nhập từ 1 đến 3 số";
+        }
+        const maxNum = MAX_NUMBERS[activeTab];
+        const invalidNumber = inputArray.find(n => parseInt(n) < 1 || parseInt(n) > maxNum);
+        if (invalidNumber) {
+            return `Vui lòng nhập số từ 01 đến ${maxNum}`;
+        }
+        return null;
+    };
+
     const handlePredict = (type = 'all', targetIndex = 0) => {
         setIsPredicting(true);
         setPredictError('');
 
         setTimeout(() => {
-            const rawInput = inputNumber.replace(/[^0-9]/g, ' ').trim();
-            const inputArray = rawInput ? rawInput.split(/\s+/).map(n => n.padStart(2, '0')) : [];
-
-            const uniqueInputs = new Set(inputArray);
-            if (uniqueInputs.size !== inputArray.length) {
-                setPredictError("Vui lòng không nhập các số trùng nhau");
-                setIsPredicting(false);
-                return;
-            }
-            if (inputArray.length < 1 || inputArray.length > 3) {
-                setPredictError("Vui lòng nhập từ 1 đến 3 số");
-                setIsPredicting(false);
-                return;
-            }
-
-            const maxNum = MAX_NUMBERS[activeTab];
-            const invalidNumber = inputArray.find(n => parseInt(n) < 1 || parseInt(n) > maxNum);
-            if (invalidNumber) {
-                setPredictError(`Vui lòng nhập số từ 01 đến ${maxNum}`);
+            const inputArray = parseInput();
+            const error = validateInput(inputArray);
+            if (error) {
+                setPredictError(error);
                 setIsPredicting(false);
                 return;
             }
 
             const targetCount = 6 - inputArray.length;
             const newTickets = [...tickets];
-            let hasError = false;
 
             if (type === 'all') {
-                for (let i = 0; i < 5; i++) {
-                    let result;
-                    if (algorithmType === 'co-occurrence') {
-                        result = predictByCoOccurrence(inputArray, targetCount, activeTab, data, [], i);
-                    } else {
-                        result = predictBy4LayerFiltering(inputArray, targetCount, activeTab, data, clientId, [], Date.now() + i);
+                // Generate all 5 tickets simultaneously with Coverage Maximizer
+                const result = predictCoverageMulti(
+                    inputArray, targetCount, activeTab, data, clientId, Date.now()
+                );
+
+                if (result.error) {
+                    setPredictError(result.error);
+                } else {
+                    for (let i = 0; i < 5; i++) {
+                        if (result.tickets[i]) {
+                            newTickets[i] = [...inputArray, ...result.tickets[i]].sort((a, b) => parseInt(a) - parseInt(b));
+                        }
                     }
-                    if (!result.error) {
-                        newTickets[i] = [...inputArray, ...result.numbers].sort((a, b) => parseInt(a) - parseInt(b));
-                    } else {
-                        setPredictError(result.error);
-                        hasError = true;
-                        break;
-                    }
+                    setTickets(newTickets);
                 }
             } else {
-                let result;
-                if (algorithmType === 'co-occurrence') {
-                    result = predictByCoOccurrence(inputArray, targetCount, activeTab, data, [], targetIndex);
-                } else {
-                    result = predictBy4LayerFiltering(inputArray, targetCount, activeTab, data, clientId, [], Date.now());
-                }
-                if (!result.error) {
-                    newTickets[targetIndex] = [...inputArray, ...result.numbers].sort((a, b) => parseInt(a) - parseInt(b));
-                } else {
+                // Single ticket generation
+                const result = predictCoverageSingle(
+                    inputArray, targetCount, activeTab, data, clientId, Date.now() + targetIndex
+                );
+
+                if (result.error) {
                     setPredictError(result.error);
-                    hasError = true;
+                } else {
+                    newTickets[targetIndex] = [...inputArray, ...result.numbers].sort((a, b) => parseInt(a) - parseInt(b));
+                    setTickets(newTickets);
                 }
             }
 
-            if (!hasError) setTickets(newTickets);
             setIsPredicting(false);
         }, 50);
     };
@@ -214,20 +229,12 @@ export default function PredictPage() {
                     </div>
                 ) : (
                     <>
-                        {/* Algorithm Selector */}
-                        <div className="flex bg-gray-800/60 rounded-xl p-1 mb-4 border border-gray-700/50">
-                            <button
-                                onClick={() => setAlgorithmType('co-occurrence')}
-                                className={`flex-1 py-2 text-xs md:text-sm font-semibold rounded-lg transition-all ${algorithmType === 'co-occurrence' ? 'bg-indigo-600 text-white shadow-md cursor-default' : 'text-gray-400 hover:text-gray-200'}`}
-                            >
-                                🎯 Cơ Bản (Mặc định)
-                            </button>
-                            <button
-                                onClick={() => setAlgorithmType('4-layer')}
-                                className={`flex-1 py-2 text-xs md:text-sm font-semibold rounded-lg transition-all ${algorithmType === '4-layer' ? 'bg-purple-600 text-white shadow-md cursor-default' : 'text-gray-400 hover:text-gray-200'}`}
-                            >
-                                🧠 4 Lớp (Nâng cao)
-                            </button>
+                        {/* Strategy Badge */}
+                        <div className="flex items-center justify-center gap-2 mb-4 py-2 px-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl">
+                            <Shield className="w-4 h-4 text-amber-400" />
+                            <span className="text-xs font-semibold text-amber-300/90">
+                                Chiến lược Coverage — Crypto-Secure Pseudo-Random Number Generator (CSPRNG)
+                            </span>
                         </div>
 
                         {/* Input + Actions */}
@@ -261,6 +268,26 @@ export default function PredictPage() {
                         {predictError && (
                             <div className="text-red-400 text-sm mb-4 px-2 flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 rounded-lg py-2">
                                 <AlertCircle className="w-4 h-4 shrink-0" /> {predictError}
+                            </div>
+                        )}
+
+                        {/* Coverage Indicator */}
+                        {coverage && (
+                            <div className="flex items-center gap-3 mb-4 px-3 py-2.5 bg-gray-800/60 rounded-xl border border-gray-700/50">
+                                <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Độ phủ số</span>
+                                        <span className="text-sm font-bold text-emerald-400">
+                                            {coverage.uniqueCount}/{coverage.maxNum} số ({coverage.percentage}%)
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-gray-700/50 rounded-full h-1.5">
+                                        <div
+                                            className="h-1.5 rounded-full transition-all duration-500 bg-gradient-to-r from-emerald-500 to-teal-400"
+                                            style={{ width: `${coverage.percentage}%` }}
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         )}
 
