@@ -20,6 +20,7 @@ import SumScatter from './components/SumScatter';
 import ViewAllModal from './components/ViewAllModal';
 import InfoModal from './components/InfoModal';
 import AdBanner from './components/AdBanner';
+import SEOContent from './components/SEOContent';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('Mega645');
@@ -176,6 +177,9 @@ export default function Dashboard() {
             <InfoModal isOpen={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
           </div>
         )}
+
+        {/* SEO / Publisher Content to satisfy Google AdSense */}
+        <SEOContent />
       </div>
     </div>
   );

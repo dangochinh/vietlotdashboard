@@ -14,13 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
+  metadataBase: new URL("https://vietlott-dashboard.vercel.app"),
   title: "Vietlott Dashboard - Phân Tích & Dự Đoán Xổ Số",
   description: "Trang tổng hợp thống kê, dự đoán và phân tích tần suất xổ số Vietlott (Mega 6/45, Power 6/55) tự động cập nhật mỗi ngày. Cung cấp bộ số đẹp, soi cầu nhanh chuẩn xác.",
   manifest: "/manifest.json",
   keywords: ["Vietlott", "Mega 6/45", "Power 6/55", "Xổ số", "Dự đoán Vietlott", "Thống kê Vietlott", "KQXS Vietlott", "Vietlott Dashboard", "Phân tích xổ số"],
   authors: [{ name: "Vietlott Dashboard" }],
   creator: "Vietlott Dashboard",
-  themeColor: "#0E1217", // Ensure splash screen and address bar match the theme
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -53,6 +53,10 @@ export const metadata = {
     shortcut: "/icon.png",
     apple: "/apple-icon.png",
   },
+};
+
+export const viewport = {
+  themeColor: "#0E1217",
 };
 
 export default function RootLayout({ children }) {
