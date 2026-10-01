@@ -21,6 +21,8 @@ import ViewAllModal from './components/ViewAllModal';
 import InfoModal from './components/InfoModal';
 import AdBanner from './components/AdBanner';
 import SEOContent from './components/SEOContent';
+import DailyAnalysis from './components/DailyAnalysis';
+import Footer from './components/Footer';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('Mega645');
@@ -178,9 +180,17 @@ export default function Dashboard() {
           </div>
         )}
 
+        {/* Daily Analysis — AI-driven high-value content for AdSense */}
+        {!loading && !error && data && data.length > 0 && (
+          <DailyAnalysis data={data} activeTab={activeTab} />
+        )}
+
         {/* SEO / Publisher Content to satisfy Google AdSense */}
         <SEOContent />
       </div>
+
+      {/* Footer with legal pages links (required by AdSense) */}
+      <Footer />
     </div>
   );
 }

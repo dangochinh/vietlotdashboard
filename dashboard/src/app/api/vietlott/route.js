@@ -11,8 +11,14 @@ async function getGoogleAuth() {
     if (process.env.GOOGLE_CREDENTIALS) {
         credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
     } else {
-        const credsPath = path.join(process.cwd(), '../scraper/credentials.json');
-        if (fs.existsSync(credsPath)) {
+        const possiblePaths = [
+            path.join(process.cwd(), '../scraper/credentials.json'),
+            path.join(process.cwd(), 'scraper/credentials.json'),
+            path.join(process.cwd(), 'VietlottDashboard/scraper/credentials.json'),
+            path.join(process.cwd(), 'credentials.json'),
+        ];
+        const credsPath = possiblePaths.find(p => fs.existsSync(p));
+        if (credsPath) {
             credentials = JSON.parse(fs.readFileSync(credsPath, 'utf8'));
         } else {
             throw new Error('No Google Credentials found. Set GOOGLE_CREDENTIALS env var or place credentials.json in scraper folder.');

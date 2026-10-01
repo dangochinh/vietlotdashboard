@@ -6,6 +6,10 @@ on:
     - cron: '30 12 * * *'
   workflow_dispatch: # Allow manual trigger
 
+permissions:
+  actions: write
+  contents: write
+
 jobs:
   scrape-and-update:
     runs-on: ubuntu-latest
@@ -31,3 +35,7 @@ jobs:
         GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
       run: |
         python main.py
+
+    - name: Keepalive Workflow (Prevent 60-day inactivity disable)
+      uses: gautamkrishnar/keepalive-workflow@v2
+

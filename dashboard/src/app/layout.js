@@ -61,7 +61,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="vi">
       <head>
         {/* Xác minh sở hữu AdSense */}
         <meta name="google-adsense-account" content="ca-pub-9806354177150523" />

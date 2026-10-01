@@ -11,5 +11,7 @@ scraper/__pycache__/
 scraper/*.pyc
 
 # OS
-.DS_Store
-Thumbs.db
+# IDE / Assistant
+.claude/
+.agent/
+
