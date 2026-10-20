@@ -37,5 +37,16 @@ jobs:
         python main.py
 
     - name: Keepalive Workflow (Prevent 60-day inactivity disable)
-      uses: gautamkrishnar/keepalive-workflow@v2
-
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        LAST_COMMIT_DATE=$(git log -1 --format=%ct)
+        CURRENT_DATE=$(date +%s)
+        DAYS_SINCE=$(( (CURRENT_DATE - LAST_COMMIT_DATE) / 86400 ))
+        if [ "$DAYS_SINCE" -gt 50 ]; then
+          git commit --allow-empty -m "chore: keepalive workflow automated commit"
+          git push
+          echo "Keepalive commit pushed (last commit was $DAYS_SINCE days ago)"
+        else
+          echo "No keepalive needed (last commit was $DAYS_SINCE days ago)"
+        fi
