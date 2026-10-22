@@ -269,7 +269,7 @@ export default function DailyAnalysis({ data, activeTab }) {
           </div>
           <p className="text-xs text-gray-500 mt-4 leading-relaxed">
             So sánh tần suất xuất hiện giữa {analysis.recentCount} kỳ gần nhất và {analysis.recentCount} kỳ trước đó 
-            để phát hiện các con số đang có xu hướng "nóng" lên hoặc "nguội" đi.
+            để theo dõi sự thay đổi tần suất trong các kỳ đã quay. Điều này không dự báo kết quả kỳ tiếp theo.
           </p>
         </div>
 
@@ -294,7 +294,7 @@ export default function DailyAnalysis({ data, activeTab }) {
             ))}
           </div>
           <p className="text-xs text-gray-500 mt-4 leading-relaxed">
-            Khi ghép vé, việc chọn các cặp số có tính liên kết lịch sử có thể giúp tăng xác suất "trùng cặp" 
+            Số liệu cặp số cho thấy các lần cùng xuất hiện trong quá khứ, không chứng minh chúng có khả năng cùng xuất hiện cao hơn ở kỳ sau.
             — một chiến thuật phổ biến trong cộng đồng người chơi xổ số chuyên nghiệp.
           </p>
         </div>
@@ -327,7 +327,7 @@ export default function DailyAnalysis({ data, activeTab }) {
               {analysis.coldNumbers.slice(0, 3).map(c => c.num).join(', ')}
             </strong>
             {' '}đã vắng mặt trên {analysis.coldNumbers[0]?.absent || 'nhiều'} kỳ liên tiếp. 
-            Theo lý thuyết cân bằng tần suất, đây là những số đáng chú ý cho chiến lược "đánh số gan".
+            Đây là thống kê về thời gian chưa xuất hiện, không phải dấu hiệu cho thấy một số sẽ sớm xuất hiện.
           </p>
           <p>
             Cặp số nổi bật nhất gần đây là <strong className="text-amber-400">{analysis.topPairs[0]?.pair}</strong> 
