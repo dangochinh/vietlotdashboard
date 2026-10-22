@@ -1,0 +1,35 @@
+name: Dashboard quality and E2E evidence
+on:
+  pull_request:
+    paths: ['dashboard/**', '.github/workflows/dashboard-quality.yml']
+  workflow_dispatch:
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - run: npm ci
+      - run: npm run test
+      - run: npm run lint
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          CI: 'true'
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-e2e-evidence
+          path: |
+            dashboard/playwright-report/
+            dashboard/test-results/
+          if-no-files-found: warn
