@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   metadataBase: new URL("https://vietlott-dashboard.vercel.app"),
-  title: "Vietlott Dashboard - Phân Tích & Dự Đoán Xổ Số",
-  description: "Trang tổng hợp thống kê, dự đoán và phân tích tần suất xổ số Vietlott (Mega 6/45, Power 6/55) tự động cập nhật mỗi ngày. Cung cấp bộ số đẹp, soi cầu nhanh chuẩn xác.",
+  title: "Vietlott Dashboard - Thống Kê Kết Quả & Tạo Bộ Vé",
+  description: "Trang tổng hợp thống kê, tra cứu và phân tích tần suất xổ số Vietlott (Mega 6/45, Power 6/55) tự động cập nhật mỗi ngày. Có công cụ tạo bộ vé ngẫu nhiên và phân bổ độ phủ để tham khảo.",
   manifest: "/manifest.json",
   keywords: ["Vietlott", "Mega 6/45", "Power 6/55", "Xổ số", "Dự đoán Vietlott", "Thống kê Vietlott", "KQXS Vietlott", "Vietlott Dashboard", "Phân tích xổ số"],
   authors: [{ name: "Vietlott Dashboard" }],
@@ -28,7 +28,7 @@ export const metadata = {
   },
   openGraph: {
     title: "Vietlott Dashboard - Phân Tích & Dự Đoán Xổ Số",
-    description: "Công cụ thống kê, dự đoán và phân tích tần suất xổ số Vietlott trực quan. Giao diện nhanh, đẹp, dữ liệu cập nhật liên tục.",
+    description: "Công cụ thống kê và phân tích tần suất xổ số Vietlott trực quan. Giao diện nhanh, đẹp, dữ liệu cập nhật liên tục.",
     url: "https://vietlott-dashboard.vercel.app",
     siteName: "Vietlott Dashboard",
     images: [
@@ -45,7 +45,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Vietlott Dashboard - Cập nhật liên tục",
-    description: "Xem tần suất vắng mặt, cặp số hot nhất hiện tại và tự động sinh vé Vietlott cực chuẩn.",
+    description: "Xem tần suất vắng mặt, cặp số hot nhất hiện tại và tạo bộ số Vietlott tham khảo.",
     images: ["/og-image.png"],
   },
   icons: {
@@ -56,7 +56,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#0E1217",
+  themeColor: "#08111f",
 };
 
 export default function RootLayout({ children }) {

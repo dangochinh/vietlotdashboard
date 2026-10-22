@@ -1,40 +1,32 @@
-import { Timer } from 'lucide-react';
+import { ArrowUpRight, Timer, Trophy } from 'lucide-react';
+import Link from 'next/link';
 
 export default function JackpotCard({ activeTab, jackpotData, countdown }) {
-    if (!jackpotData) return null;
-
-    return (
-        <section className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-6 md:p-8 border border-gray-700 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col items-center justify-center text-center">
-            <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-yellow-500/10 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-[-50px] left-[-50px] w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl"></div>
-
-            <h2 className="text-xl md:text-2xl font-bold text-gray-300 mb-2 drop-shadow-sm flex items-center justify-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
-                Giá trị Jackpot Ước Tính
-            </h2>
-
-            {activeTab === 'Mega645' ? (
-                <p className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500 drop-shadow-lg tracking-tight">
-                    {jackpotData.jackpot1} VNĐ
-                </p>
-            ) : (
-                <div className="flex flex-col items-center gap-1 md:gap-2">
-                    <p className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500 drop-shadow-lg">
-                        JP1: {jackpotData.jackpot1} VNĐ
-                    </p>
-                    {jackpotData.jackpot2 && (
-                        <p className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">
-                            JP2: {jackpotData.jackpot2} VNĐ
-                        </p>
-                    )}
-                </div>
-            )}
-
-            <div className="mt-4 md:mt-6 flex items-center gap-2 text-gray-300 bg-gray-800/80 px-5 py-2.5 rounded-xl border border-gray-700 shadow-inner">
-                <Timer className="w-5 h-5 text-amber-400" />
-                <span className="text-sm font-medium text-gray-400">Kỳ xổ tiếp theo:</span>
-                <span className="text-lg font-mono font-bold text-amber-300 tabular-nums tracking-wider">{countdown}</span>
+  if (!jackpotData) return null;
+  return (
+    <section className="relative isolate overflow-hidden rounded-[28px] border border-teal-400/20 bg-gradient-to-br from-[#173a44] via-[#142b38] to-[#111d30] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.2)] md:p-9">
+      <div className="pointer-events-none absolute -right-16 -top-28 -z-10 h-80 w-80 rounded-full bg-teal-400/15 blur-[90px]" />
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0">
+          <p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-teal-200"><Trophy className="h-4 w-4" /> Giá trị jackpot ước tính</p>
+          {activeTab === 'Mega645' ? (
+            <p className="break-words text-3xl font-black tracking-tight text-white sm:text-5xl">{jackpotData.jackpot1} <span className="text-lg text-teal-200 sm:text-2xl">VNĐ</span></p>
+          ) : (
+            <div className="space-y-2">
+              <p className="break-words text-2xl font-black text-white sm:text-4xl">JP1: {jackpotData.jackpot1} <span className="text-lg text-teal-200">VNĐ</span></p>
+              {jackpotData.jackpot2 && <p className="break-words text-xl font-bold text-amber-300 sm:text-2xl">JP2: {jackpotData.jackpot2} VNĐ</p>}
             </div>
-        </section>
-    );
+          )}
+          <p className="mt-4 max-w-xl text-xs leading-5 text-slate-300">Số liệu chỉ để tham khảo. Kiểm tra kết quả và thông tin chính thức trước khi tham gia.</p>
+        </div>
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center lg:flex-col lg:items-stretch">
+          <div className="rounded-xl border border-white/15 bg-[#071523]/60 px-4 py-3">
+            <span className="mb-1 flex items-center gap-2 text-xs text-slate-300"><Timer className="h-4 w-4 text-amber-300" /> Đếm ngược kỳ tiếp theo</span>
+            <span className="font-mono text-xl font-black tabular-nums text-amber-200">{countdown}</span>
+          </div>
+          <Link href="/predict" className="flex items-center justify-center gap-2 rounded-xl bg-teal-400 px-5 py-3.5 text-sm font-black text-slate-950 transition-colors hover:bg-teal-300">Tạo bộ vé <ArrowUpRight className="h-4 w-4" /></Link>
+        </div>
+      </div>
+    </section>
+  );
 }
