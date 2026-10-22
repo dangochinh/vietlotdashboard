@@ -106,8 +106,8 @@ export default function Dashboard() {
   }, [data]);
 
   return (
-    <div className="min-h-screen bg-[#0E1217] text-white p-6 font-sans">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-[#08111f] text-white px-4 py-0 font-sans sm:px-6">
+      <div className="mx-auto max-w-7xl space-y-7">
         <Header
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -116,6 +116,15 @@ export default function Dashboard() {
         />
 
 
+
+        <section className="flex flex-wrap items-end justify-between gap-3 pt-3 sm:pt-5" aria-labelledby="overview-title">
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-teal-300">LIVE DATA OVERVIEW</p>
+            <h1 id="overview-title" className="text-3xl font-black tracking-tight sm:text-4xl">Thống kê <span className="text-teal-400">Vietlott</span></h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">Kết quả quay số, lịch sử và biểu đồ phân tích cho Mega 6/45 và Power 6/55.</p>
+          </div>
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-slate-300">Phân tích quá khứ · Không dự đoán tương lai</span>
+        </section>
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
@@ -131,14 +140,14 @@ export default function Dashboard() {
             <p className="text-sm mt-2">Vui lòng kiểm tra Google Sheet hoặc chạy Github Actions Scraper.</p>
           </div>
         ) : (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="space-y-6 animate-in fade-in duration-700">
             <JackpotCard activeTab={activeTab} jackpotData={jackpotData} countdown={countdown} />
 
             {/* ── Banner 1: Dưới Jackpot (vị trí vàng) ─────────────────── */}
             <AdBanner position="top" />
 
             {/* Grid 1: Frequency + History */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6">
               <FrequencyChart data={frequencyData} onViewAll={setViewAllModal} />
               <HistoryTable data={data} activeTab={activeTab} />
             </div>
@@ -147,7 +156,7 @@ export default function Dashboard() {
             <FullFrequencyChart data={frequencyData} />
 
             {/* Grid 2: Pairs + Trios */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6">
               <PairsChart data={pairData} onViewAll={setViewAllModal} />
               <TriosChart data={trioData} onViewAll={setViewAllModal} />
             </div>
@@ -156,7 +165,7 @@ export default function Dashboard() {
             <AdBanner position="mid" />
 
             {/* Grid 3: Cold Numbers + Even/Odd */}
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-700 mt-8">
+            <div className="space-y-6 animate-in fade-in duration-700">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <ColdNumbersChart data={coldNumbersData} onViewAll={setViewAllModal} />
                 <EvenOddPie data={evenOddData} />

@@ -1,24 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import { Activity, Maximize2, X } from 'lucide-react';
 import { TOOLTIP_STYLE } from '../lib/constants';
 
-export default function FullFrequencyChart({ data }) {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
-    if (!data?.sequential?.length) return null;
-
-    const sortedVals = [...data.sequential].map(d => d.frequency).sort((a, b) => b - a);
-    const threshold = sortedVals[4] || 0; 
-
-    const ChartComponent = ({ height = '100%', isModal = false }) => {
+    function ChartComponent({ height = '100%', isModal = false, sequential, threshold }) {
         const isVertical = isModal;
 
         return (
             <ResponsiveContainer width="100%" height={height}>
                 <BarChart 
                     layout={isVertical ? "vertical" : "horizontal"}
-                    data={data.sequential} 
+                    data={sequential} 
                     margin={isVertical 
                         ? { top: 10, right: 40, left: 0, bottom: 10 } 
                         : { top: 10, right: 10, left: -20, bottom: 20 }
@@ -63,7 +55,7 @@ export default function FullFrequencyChart({ data }) {
                         radius={isVertical ? [0, 4, 4, 0] : [4, 4, 0, 0]}
                         isAnimationActive={false}
                     >
-                        {data.sequential.map((entry, index) => (
+                        {sequential.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.frequency >= threshold ? '#ea580c' : '#334155'} />
                         ))}
                         {isVertical && (
@@ -80,7 +72,17 @@ export default function FullFrequencyChart({ data }) {
                 </BarChart>
             </ResponsiveContainer>
         );
-    };
+    }
+
+export default function FullFrequencyChart({ data }) {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    if (!data?.sequential?.length) return null;
+
+    const sortedVals = [...data.sequential].map(d => d.frequency).sort((a, b) => b - a);
+    const threshold = sortedVals[4] || 0; 
+
+
 
     return (
         <div className="bg-gray-900/40 rounded-3xl p-4 md:p-6 border border-gray-800 shadow-xl flex flex-col mt-8">
@@ -111,7 +113,7 @@ export default function FullFrequencyChart({ data }) {
             {/* Inline Chart Container with Horizontal Scroll */}
             <div className="w-full overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-800 scrollbar-track-transparent">
                 <div className="h-80" style={{ minWidth: Math.max(0, data.sequential.length * 20) + 'px' }}>
-                    <ChartComponent />
+                    <ChartComponent sequential={data.sequential} threshold={threshold} />
                 </div>
             </div>
 
@@ -146,7 +148,7 @@ export default function FullFrequencyChart({ data }) {
                             This is much more stable than CSS rotation and handles all touch gestures perfectly.
                         */}
                         <div style={{ height: Math.max(800, data.sequential.length * 35) + 'px' }} className="w-full max-w-4xl mx-auto">
-                            <ChartComponent height="100%" isModal={true} />
+                            <ChartComponent height="100%" isModal={true} sequential={data.sequential} threshold={threshold} />
                         </div>
                     </div>
                     
