@@ -1,374 +1,297 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+
+import { useState } from 'react';
 import Link from 'next/link';
-import { Wand2, AlertCircle, Loader2, Trash2, ArrowDown, RefreshCw, Send, ArrowLeft, Shield } from 'lucide-react';
-import Ball from '../components/Ball';
-import { MAX_NUMBERS } from '../lib/constants';
-import { validateSeeds } from '../lib/ticketValidation.mjs';
-import { useVietlottData } from '../hooks/useVietlottData';
-import { predictCoverageMulti, predictCoverageSingle, calculateCoverage } from '../lib/prediction';
+import {
+  ArrowLeft, ArrowRight, Check, Copy, Info, Layers3, RefreshCcw,
+  Send, ShieldCheck, Shuffle, Sparkles, Trash2, WandSparkles
+} from 'lucide-react';
+import { generateTicketSet, normalizeSeeds, summarizeTickets, GAMES } from '../lib/ticketEngine.mjs';
+
+const EMPTY = [[], [], [], [], []];
+const LABELS = ['A', 'B', 'C', 'D', 'E'];
 
 export default function PredictPage() {
-    const [activeTab, setActiveTab] = useState('Mega645');
-    const [inputNumber, setInputNumber] = useState('');
-    const [tickets, setTickets] = useState([[], [], [], [], []]);
-    const [predictError, setPredictError] = useState('');
-    const [isPredicting, setIsPredicting] = useState(false);
-    const [activeTicketIndex, setActiveTicketIndex] = useState(0);
-    const [coverage, setCoverage] = useState(null);
-    const inputRef = useRef(null);
+  const [game, setGame] = useState('Mega645');
+  const [favoriteInput, setFavoriteInput] = useState('');
+  const [mode, setMode] = useState('coverage');
+  const [tickets, setTickets] = useState(EMPTY);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+  const max = GAMES[game];
+  const parsed = normalizeSeeds(favoriteInput, game);
+  const summary = summarizeTickets(tickets, game);
+  const grid = Array.from({ length: max }, (_, i) => String(i + 1).padStart(2, '0'));
 
-    const [clientId] = useState(() => {
-        if (typeof window !== 'undefined') {
-            let id = localStorage.getItem('vietlott_client_id');
-            if (!id) {
-                id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-                localStorage.setItem('vietlott_client_id', id);
-            }
-            return id;
-        }
-        return '';
-    });
+  function switchGame(nextGame) {
+    if (nextGame === game) return;
+    setGame(nextGame);
+    setFavoriteInput('');
+    setTickets([[], [], [], [], []]);
+    setActiveIndex(0);
+    setError('');
+    setCopied(false);
+  }
 
-    const { data, loading } = useVietlottData(activeTab);
+  function changeFavorites(raw) {
+    const digits = raw.replace(/\D/g, '').slice(0, 6);
+    const formatted = digits.match(/.{1,2}/g)?.join(' ') || '';
+    setFavoriteInput(formatted);
+    setTickets([[], [], [], [], []]);
+    setError('');
+    setCopied(false);
+  }
 
-    // Reset tickets when switching tabs
-    useEffect(() => {
-        setTickets([[], [], [], [], []]);
-        setPredictError('');
-        setInputNumber('');
-        setActiveTicketIndex(0);
-        setCoverage(null);
-    }, [activeTab]);
+  function toggleFavorite(num) {
+    const { seeds, error: validationError } = normalizeSeeds(favoriteInput, game);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    const next = seeds.includes(num) ? seeds.filter(n => n !== num) : [...seeds, num];
+    if (next.length > 3) {
+      setError('Chỉ được chọn tối đa 3 số yêu thích');
+      return;
+    }
+    setFavoriteInput(next.join(' '));
+    setTickets([[], [], [], [], []]);
+    setError('');
+    setCopied(false);
+  }
 
-    useEffect(() => {
-        if (inputRef.current) {
-            inputRef.current.focus();
-        }
-    }, []);
+  function generateAll() {
+    const { seeds, error: validationError } = normalizeSeeds(favoriteInput, game);
+    if (validationError) { setError(validationError); return; }
+    try {
+      const result = generateTicketSet({ game, seeds, count: 5, mode });
+      setTickets(result);
+      setActiveIndex(0);
+      setError('');
+      setCopied(false);
+    } catch (err) {
+      setError(err.message || 'Không thể tạo bộ vé');
+    }
+  }
 
-    // Update coverage whenever tickets change
-    useEffect(() => {
-        const maxNum = MAX_NUMBERS[activeTab];
-        const validTickets = tickets.filter(t => t && t.length === 6);
-        if (validTickets.length > 0) {
-            setCoverage(calculateCoverage(validTickets, maxNum));
-        } else {
-            setCoverage(null);
-        }
-    }, [tickets, activeTab]);
+  function regenerateOne(index) {
+    const { seeds, error: validationError } = normalizeSeeds(favoriteInput, game);
+    if (validationError) { setError(validationError); return; }
+    try {
+      const others = tickets.filter((ticket, i) => i !== index && ticket.length === 6);
+      const [newTicket] = generateTicketSet({ game, seeds, count: 1, mode, existing: others });
+      setTickets(prev => prev.map((ticket, i) => i === index ? newTicket : ticket));
+      setActiveIndex(index);
+      setError('');
+      setCopied(false);
+    } catch (err) {
+      setError(err.message || 'Không thể tạo lại vé');
+    }
+  }
 
-    const handleInputChange = (e) => {
-        let val = e.target.value.replace(/\D/g, '');
-        if (val.length > 6) val = val.slice(0, 6);
-        const formatted = val.match(/.{1,2}/g)?.join(' ') || '';
-        setInputNumber(formatted);
-    };
+  function clearTicket(index) {
+    setTickets(prev => prev.map((ticket, i) => i === index ? [] : ticket));
+    setCopied(false);
+  }
 
-    const parseInput = () => {
-        const rawInput = inputNumber.replace(/[^0-9]/g, ' ').trim();
-        return rawInput ? rawInput.split(/\s+/).map(n => n.padStart(2, '0')) : [];
-    };
+  function toggleTicketNumber(num) {
+    setTickets(prev => prev.map((ticket, i) => {
+      if (i !== activeIndex) return ticket;
+      if (ticket.includes(num)) return ticket.filter(n => n !== num);
+      if (ticket.length >= 6) return ticket;
+      return [...ticket, num].sort((a, b) => +a - +b);
+    }));
+    setCopied(false);
+  }
 
-    const validateInput = (inputArray) => validateSeeds(inputArray, MAX_NUMBERS[activeTab], 6 - inputArray.length) || null;
+  function formattedTickets() {
+    return tickets
+      .map((ticket, index) => ticket.length === 6 ? LABELS[index] + ': ' + ticket.join(' - ') : null)
+      .filter(Boolean).join('\n');
+  }
 
-    const handlePredict = (type = 'all', targetIndex = 0) => {
-        setIsPredicting(true);
-        setPredictError('');
+  async function copyTickets() {
+    const text = formattedTickets();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+    } catch {
+      setError('Trình duyệt không cho phép sao chép. Vui lòng kiểm tra quyền Clipboard.');
+    }
+  }
 
-        setTimeout(() => {
-            const inputArray = parseInput();
-            const error = validateInput(inputArray);
-            if (error) {
-                setPredictError(error);
-                setIsPredicting(false);
-                return;
-            }
+  function openSMS() {
+    const valid = tickets.filter(ticket => ticket.length === 6);
+    if (!valid.length) return;
+    const code = game === 'Mega645' ? '645' : '655';
+    const body = code + ' K1 ' + valid.map(ticket => 'S ' + ticket.join(' ')).join(' ');
+    window.location.href = 'sms:9969?body=' + encodeURIComponent(body);
+  }
 
-            const targetCount = 6 - inputArray.length;
-            const newTickets = [...tickets];
-
-            if (type === 'all') {
-                // Generate all 5 tickets simultaneously with Coverage Maximizer
-                const result = predictCoverageMulti(
-                    inputArray, targetCount, activeTab, data, clientId, Date.now()
-                );
-
-                if (result.error) {
-                    setPredictError(result.error);
-                } else {
-                    for (let i = 0; i < 5; i++) {
-                        if (result.tickets[i]) {
-                            newTickets[i] = [...inputArray, ...result.tickets[i]].sort((a, b) => parseInt(a) - parseInt(b));
-                        }
-                    }
-                    setTickets(newTickets);
-                }
-            } else {
-                // Single ticket generation
-                const result = predictCoverageSingle(
-                    inputArray, targetCount, activeTab, data, clientId, Date.now() + targetIndex
-                );
-
-                if (result.error) {
-                    setPredictError(result.error);
-                } else {
-                    newTickets[targetIndex] = [...inputArray, ...result.numbers].sort((a, b) => parseInt(a) - parseInt(b));
-                    setTickets(newTickets);
-                }
-            }
-
-            setIsPredicting(false);
-        }, 50);
-    };
-
-    const handlePredictClick = (type = 'all', index = 0) => {
-        if (type === 'single') setActiveTicketIndex(index);
-        handlePredict(type, index);
-    };
-
-    const handleUpdateTicket = (ticketIndex, newNumbers) => {
-        const newTickets = [...tickets];
-        newTickets[ticketIndex] = newNumbers;
-        setTickets(newTickets);
-    };
-
-    const handleClearTicket = (ticketIndex) => {
-        const newTickets = [...tickets];
-        newTickets[ticketIndex] = [];
-        setTickets(newTickets);
-    };
-
-    const handleGridToggle = (strNum) => {
-        const currentTicket = tickets[activeTicketIndex] || [];
-        if (currentTicket.includes(strNum)) {
-            handleUpdateTicket(activeTicketIndex, currentTicket.filter(n => n !== strNum));
-        } else {
-            if (currentTicket.length < 6) {
-                const newTicket = [...currentTicket, strNum].sort((a, b) => parseInt(a) - parseInt(b));
-                handleUpdateTicket(activeTicketIndex, newTicket);
-            }
-        }
-    };
-
-    const maxGridNum = activeTab === 'Mega645' ? 45 : 55;
-    const gridNumbers = Array.from({ length: maxGridNum }, (_, i) => String(i + 1).padStart(2, '0'));
-
-    const handleCopySMS = () => {
-        const validTickets = tickets.filter(t => t && t.length === 6);
-        if (validTickets.length === 0) return;
-
-        const code = activeTab === 'Mega645' ? '645' : '655';
-        const smsBody = `${code} K1 ${validTickets.map(t => `S ${t.join(' ')}`).join(' ')}`;
-        window.location.href = `sms:9969?body=${encodeURIComponent(smsBody)}`;
-    };
-
-    return (
-        <div className="min-h-screen bg-[#0E1217] text-white font-sans">
-            {/* Top Navigation Bar */}
-            <div className="sticky top-0 z-50 bg-[#0E1217]/95 backdrop-blur-xl border-b border-gray-800 shadow-2xl">
-                <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-                    <Link
-                        href="/"
-                        className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors group"
-                    >
-                        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
-                        <span className="text-sm font-medium hidden sm:inline">Dashboard</span>
-                    </Link>
-
-                    <div className="flex items-center gap-2">
-                        <Wand2 className="w-5 h-5 text-purple-400" />
-                        <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-400">
-                            Tạo bộ vé
-                        </h1>
-                    </div>
-
-                    {/* Ticket type toggle */}
-                    <div className="flex bg-gray-900 rounded-lg p-0.5 border border-gray-700">
-                        <button
-                            onClick={() => setActiveTab('Mega645')}
-                            className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'Mega645'
-                                ? 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-lg'
-                                : 'text-gray-400 hover:text-white'
-                                }`}
-                        >
-                            6/45
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('Power655')}
-                            className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${activeTab === 'Power655'
-                                ? 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-lg'
-                                : 'text-gray-400 hover:text-white'
-                                }`}
-                        >
-                            6/55
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Main Content */}
-            <div className="max-w-3xl mx-auto px-4 pt-4 pb-28">
-                {loading ? (
-                    <div className="flex flex-col justify-center items-center h-64 gap-3">
-                        <Loader2 className="w-10 h-10 text-purple-500 animate-spin" />
-                        <p className="text-gray-400 text-sm">Đang tải dữ liệu {activeTab === 'Mega645' ? 'Mega 6/45' : 'Power 6/55'}...</p>
-                    </div>
-                ) : (
-                    <>
-                        {/* Strategy Badge */}
-                        <div className="flex items-center justify-center gap-2 mb-4 py-2 px-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl">
-                            <Shield className="w-4 h-4 text-amber-400" />
-                            <span className="text-xs font-semibold text-amber-300/90">
-                                Chiến lược Coverage — phân bổ số theo thống kê lịch sử (không dự đoán kết quả)
-                            </span>
-                        </div>
-                        <p className="text-xs text-slate-400 text-center mb-4">Mỗi tổ hợp hợp lệ có xác suất như nhau trong một kỳ quay công bằng. Độ phủ chỉ mô tả sự đa dạng giữa các vé, không phải xác suất trúng.</p>
-
-                        {/* Input + Actions */}
-                        <div className="flex gap-2 mb-4">
-                            <input
-                                ref={inputRef}
-                                type="text"
-                                inputMode="numeric"
-                                value={inputNumber}
-                                onChange={handleInputChange}
-                                onKeyDown={(e) => e.key === 'Enter' && handlePredictClick('single', activeTicketIndex)}
-                                placeholder="Nhập hạt giống (VD: 08 12)"
-                                className="flex-1 min-w-0 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:placeholder-transparent transition-all font-mono text-sm"
-                            />
-                            <button
-                                onClick={() => handlePredictClick('single', activeTicketIndex)}
-                                disabled={isPredicting}
-                                className="px-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg transition-colors flex items-center justify-center min-w-[60px] text-sm"
-                            >
-                                {isPredicting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Tìm'}
-                            </button>
-                            <button
-                                onClick={() => handlePredictClick('all')}
-                                disabled={isPredicting}
-                                className="px-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:opacity-90 text-white rounded-xl font-bold shadow-lg transition-colors flex items-center justify-center whitespace-nowrap text-sm"
-                            >
-                                {isPredicting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : 'Tạo 5 Vé'}
-                            </button>
-                        </div>
-
-                        {predictError && (
-                            <div className="text-red-400 text-sm mb-4 px-2 flex items-center gap-1.5 bg-red-500/10 border border-red-500/20 rounded-lg py-2">
-                                <AlertCircle className="w-4 h-4 shrink-0" /> {predictError}
-                            </div>
-                        )}
-
-                        {/* Coverage Indicator */}
-                        {coverage && (
-                            <div className="flex items-center gap-3 mb-4 px-3 py-2.5 bg-gray-800/60 rounded-xl border border-gray-700/50">
-                                <div className="flex-1">
-                                    <div className="flex items-center justify-between mb-1.5">
-                                        <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Độ phủ số</span>
-                                        <span className="text-sm font-bold text-emerald-400">
-                                            {coverage.uniqueCount}/{coverage.maxNum} số ({coverage.percentage}%)
-                                        </span>
-                                    </div>
-                                    <div className="w-full bg-gray-700/50 rounded-full h-1.5">
-                                        <div
-                                            className="h-1.5 rounded-full transition-all duration-500 bg-gradient-to-r from-emerald-500 to-teal-400"
-                                            style={{ width: `${coverage.percentage}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Tickets List */}
-                        <div className="flex flex-col gap-1 bg-gray-900/50 rounded-xl border border-gray-800/50 p-2 mb-4">
-                            {tickets.map((ticketNums, i) => {
-                                const isActive = activeTicketIndex === i;
-                                const hasNums = ticketNums && ticketNums.length > 0;
-                                return (
-                                    <div
-                                        key={i}
-                                        onClick={() => setActiveTicketIndex(i)}
-                                        className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 md:py-2 rounded-xl transition-all cursor-pointer ${isActive ? 'bg-gray-800/80 shadow-sm ring-1 ring-indigo-500/30' : 'bg-transparent hover:bg-gray-800/40'}`}
-                                    >
-                                        <span className={`w-6 sm:w-7 font-bold text-center text-sm ${isActive ? 'text-indigo-400' : 'text-gray-500'}`}>
-                                            {String.fromCharCode(65 + i)}
-                                        </span>
-                                        <div className="flex-1 flex gap-0.5 sm:gap-1 justify-center relative items-center min-h-[36px] md:min-h-[44px]">
-                                            {[0, 1, 2, 3, 4, 5].map(j => {
-                                                const num = hasNums ? ticketNums[j] : null;
-                                                return (
-                                                    <div key={j} className="transform scale-[0.65] sm:scale-[0.8] md:scale-[0.85] origin-center -mx-1.5 sm:-mx-1">
-                                                        {num ? (
-                                                            <Ball num={num} />
-                                                        ) : (
-                                                            <div className="w-12 h-12 rounded-full bg-gray-800/60 shadow-inner [box-shadow:inset_0_-2px_6px_rgba(0,0,0,0.5)] border-[2px] border-gray-700/30"></div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                        <div className="flex shrink-0 w-8 justify-center">
-                                            {hasNums ? (
-                                                <button onClick={(e) => { e.stopPropagation(); handleClearTicket(i); }} className="p-1.5 text-gray-500 hover:text-red-400 transition-colors">
-                                                    <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                                                </button>
-                                            ) : (
-                                                <button onClick={(e) => { e.stopPropagation(); handlePredictClick('single', i); }} className={`p-1.5 transition-colors ${isActive ? 'text-indigo-400' : 'text-gray-500 hover:text-indigo-300'}`}>
-                                                    <RefreshCw className={`w-4 h-4 sm:w-5 sm:h-5 ${isPredicting && isActive ? 'animate-spin' : ''}`} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* Grid Section */}
-                        <div className="bg-gray-900/50 rounded-xl border border-gray-800/50 p-3 sm:p-4">
-                            <div className="flex items-center justify-center gap-1.5 text-[10px] md:text-xs font-semibold text-gray-500 mb-3 tracking-wider uppercase">
-                                <ArrowDown className="w-3 h-3" /> Bấm để đổi số cho Vé <span className="text-indigo-400 font-bold">{String.fromCharCode(65 + activeTicketIndex)}</span> <ArrowDown className="w-3 h-3" />
-                            </div>
-                            <div className="grid grid-cols-8 sm:grid-cols-10 gap-1.5 sm:gap-2 mx-auto justify-items-center max-w-fit">
-                                {gridNumbers.map(strNum => {
-                                    const activeTicket = tickets[activeTicketIndex] || [];
-                                    const isActive = activeTicket.includes(strNum);
-                                    const parsedInput = inputNumber.trim().split(/\s+/).filter(Boolean).map(n => n.padStart(2, '0'));
-                                    const isInput = parsedInput.includes(strNum);
-
-                                    return (
-                                        <button
-                                            key={strNum}
-                                            disabled={!isActive && activeTicket.length >= 6}
-                                            onClick={() => handleGridToggle(strNum)}
-                                            className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all transform active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed ${isActive
-                                                ? `${parseInt(strNum) > 40 ? 'bg-red-500 shadow-red-500/20' : 'bg-blue-600 shadow-blue-500/20'} text-white shadow-lg ${isInput ? 'ring-4 ring-amber-400 ring-offset-1 ring-offset-gray-900 z-10' : 'ring-2 ring-white/30'}`
-                                                : 'bg-white text-gray-800 hover:bg-gray-200 shadow-sm'
-                                                }`}
-                                        >
-                                            {strNum}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
-
-            {/* Fixed Bottom Footer */}
-            <div className="fixed bottom-0 left-0 right-0 bg-[#0E1217]/95 backdrop-blur-xl border-t border-gray-800 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
-                <div className="max-w-3xl mx-auto px-4 py-3">
-                    <button
-                        onClick={handleCopySMS}
-                        disabled={!tickets.some(t => t && t.length === 6)}
-                        className="w-full py-3.5 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white rounded-xl font-bold shadow-[0_0_20px_rgba(20,184,166,0.3)] transition-all flex items-center justify-center gap-2 text-base active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:shadow-none"
-                    >
-                        <Send className="w-5 h-5" />
-                        Mua Vé Ngay Qua SMS
-                    </button>
-                    <p className="text-[10px] text-gray-500 text-center mt-1.5 font-medium">Cú pháp sẽ được sinh tự động gửi đến 9969 (Đại lý Vietlott)</p>
-                </div>
-            </div>
+  return (
+    <div className="min-h-screen bg-[#08111f] text-slate-50">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0b1525]/95 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <Link href="/" className="group inline-flex items-center gap-2 rounded-lg text-sm text-slate-300 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-400" aria-label="Quay lại trang thống kê">
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            <span className="hidden sm:inline">Thống kê</span>
+            <span className="sm:hidden">Trở về</span>
+          </Link>
+          <Link href="/" className="flex items-center gap-2 text-sm font-black tracking-[0.16em] sm:text-base">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-teal-400 text-[#071423]"><Layers3 className="h-5 w-5" /></span>
+            VIETLOTT<span className="text-teal-400">STUDIO</span>
+          </Link>
+          <span className="hidden rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-medium text-emerald-300 sm:inline-flex">Công cụ tham khảo độc lập</span>
         </div>
-    );
+      </header>
+
+      <main className="mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6 lg:pt-12">
+        <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-teal-400/25 bg-teal-400/10 px-3 py-1 text-xs font-semibold tracking-wide text-teal-300">
+              <Sparkles className="h-3.5 w-3.5" /> TICKET LAB
+            </div>
+            <h1 className="max-w-3xl text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">Tạo bộ vé <span className="text-teal-400">theo cách của bạn.</span></h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
+              Chọn số yêu thích, chọn cách phân bổ và tạo 5 bộ số trong một lần. Có thể điều chỉnh từng vé sau khi tạo.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-1.5" role="group" aria-label="Chọn loại hình xổ số">
+            <button type="button" onClick={() => switchGame('Mega645')} aria-pressed={game === 'Mega645'} className={'min-w-28 rounded-xl px-5 py-3 text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-teal-400 ' + (game === 'Mega645' ? 'bg-teal-400 text-slate-950' : 'text-slate-400 hover:bg-white/10 hover:text-white')}>6/45</button>
+            <button type="button" onClick={() => switchGame('Power655')} aria-pressed={game === 'Power655'} className={'min-w-28 rounded-xl px-5 py-3 text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-teal-400 ' + (game === 'Power655' ? 'bg-teal-400 text-slate-950' : 'text-slate-400 hover:bg-white/10 hover:text-white')}>6/55</button>
+          </div>
+        </div>
+
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(310px,380px)_minmax(0,1fr)] lg:gap-6">
+          <aside className="space-y-5">
+            <section className="overflow-hidden rounded-3xl border border-white/10 bg-[#111f33] shadow-[0_20px_50px_rgba(0,0,0,0.17)]">
+              <div className="border-b border-white/10 px-5 py-5 sm:px-6">
+                <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-teal-300"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-400 text-xs text-slate-950">1</span> Thiết lập</div>
+                <h2 className="text-xl font-bold">Cấu hình bộ số</h2>
+                <p className="mt-1 text-sm text-slate-400">Tùy chỉnh trước khi sinh vé.</p>
+              </div>
+              <div className="space-y-6 p-5 sm:p-6">
+                <div>
+                  <label htmlFor="favorite-numbers" className="mb-2 block text-sm font-semibold text-slate-100">Số yêu thích <span className="font-normal text-slate-400">(không bắt buộc)</span></label>
+                  <input id="favorite-numbers" type="text" inputMode="numeric" autoComplete="off" placeholder="Nhập hạt giống (VD: 08 12)" value={favoriteInput} onChange={e => changeFavorites(e.target.value)} onKeyDown={e => e.key === 'Enter' && generateAll()} aria-invalid={Boolean(parsed.error)} className="w-full rounded-xl border border-white/15 bg-[#0a1525] px-4 py-3.5 font-mono text-base tracking-wider text-white outline-none transition-colors placeholder:font-sans placeholder:text-sm placeholder:tracking-normal placeholder:text-slate-500 focus:border-teal-400" />
+                  <p className="mt-2 text-xs leading-5 text-slate-400">Tối đa 3 số. Các số này sẽ xuất hiện trong mọi vé được tạo.</p>
+                  <div className="mt-3 grid grid-cols-7 gap-1.5" role="group" aria-label="Chọn số yêu thích">
+                    {grid.map(num => {
+                      const chosen = parsed.seeds.includes(num);
+                      return (
+                        <button key={num} type="button" onClick={() => toggleFavorite(num)} aria-pressed={chosen} aria-label={'Yêu thích số ' + num} className={'aspect-square min-w-0 rounded-lg border text-[11px] font-bold transition-colors focus-visible:outline-2 focus-visible:outline-teal-300 sm:text-xs ' + (chosen ? 'border-teal-300 bg-teal-400 text-slate-950' : 'border-white/10 bg-white/[0.05] text-slate-300 hover:border-teal-400/50 hover:bg-teal-400/10')}>{num}</button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="mb-3 text-sm font-semibold">Chiến lược phân bổ</h3>
+                  <div className="grid grid-cols-2 gap-2" role="group" aria-label="Chiến lược tạo vé">
+                    <button type="button" onClick={() => setMode('coverage')} aria-pressed={mode === 'coverage'} className={'rounded-2xl border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-teal-400 ' + (mode === 'coverage' ? 'border-teal-400/70 bg-teal-400/10' : 'border-white/10 bg-[#0a1525] hover:border-white/30')}>
+                      <Layers3 className={'mb-2 h-5 w-5 ' + (mode === 'coverage' ? 'text-teal-300' : 'text-slate-400')} />
+                      <span className="block text-sm font-bold">Phủ số</span><span className="mt-1 block text-[11px] leading-4 text-slate-400">Giảm số lặp giữa các vé</span>
+                    </button>
+                    <button type="button" onClick={() => setMode('random')} aria-pressed={mode === 'random'} className={'rounded-2xl border p-3 text-left transition-colors focus-visible:outline-2 focus-visible:outline-teal-400 ' + (mode === 'random' ? 'border-teal-400/70 bg-teal-400/10' : 'border-white/10 bg-[#0a1525] hover:border-white/30')}>
+                      <Shuffle className={'mb-2 h-5 w-5 ' + (mode === 'random' ? 'text-teal-300' : 'text-slate-400')} />
+                      <span className="block text-sm font-bold">Ngẫu nhiên</span><span className="mt-1 block text-[11px] leading-4 text-slate-400">Chọn số độc lập mỗi vé</span>
+                    </button>
+                  </div>
+                </div>
+                <button type="button" onClick={generateAll} className="group flex w-full items-center justify-center gap-2 rounded-xl bg-teal-400 px-5 py-4 text-sm font-black text-slate-950 shadow-lg shadow-teal-950/20 transition-all hover:bg-teal-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+                  <WandSparkles className="h-5 w-5" /> Tạo 5 Vé <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </button>
+                {error && <p role="alert" className="rounded-xl border border-rose-400/30 bg-rose-400/10 p-3 text-sm text-rose-200">{error}</p>}
+              </div>
+            </section>
+
+            <div className="rounded-2xl border border-sky-300/15 bg-sky-300/[0.06] p-4 text-xs leading-5 text-slate-300">
+              <p className="mb-1 flex items-center gap-2 font-bold text-sky-200"><ShieldCheck className="h-4 w-4" /> Về xác suất</p>
+              Mọi tổ hợp hợp lệ đều có xác suất trúng như nhau trong một kỳ quay công bằng. Chế độ phủ số chỉ giúp phân tán lựa chọn giữa các vé, không dự đoán kết quả.
+            </div>
+          </aside>
+
+          <div className="min-w-0 space-y-5">
+            <section className="rounded-3xl border border-white/10 bg-[#111f33] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.17)] sm:p-6">
+              <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-teal-300"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-400 text-xs text-slate-950">2</span> Kết quả</div>
+                  <h2 className="text-xl font-bold sm:text-2xl">Bộ vé của bạn</h2>
+                  <p className="mt-1 text-sm text-slate-400">Chọn từng vé để chỉnh sửa hoặc tạo lại.</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-[#0a1525] px-4 py-3 text-right">
+                  <span className="block text-2xl font-black tabular-nums text-teal-300">{summary.count}<span className="text-base text-slate-500">/5</span></span>
+                  <span className="text-xs text-slate-400">vé hoàn chỉnh</span>
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2" data-testid="ticket-list">
+                {tickets.map((ticket, index) => (
+                  <div key={index} data-testid={'ticket-' + index} className={'min-w-0 rounded-2xl border p-3.5 transition-colors sm:p-4 ' + (activeIndex === index ? 'border-teal-400/60 bg-teal-400/[0.07]' : 'border-white/10 bg-[#0b182a] hover:border-white/25')}>
+                    <div className="mb-4 flex items-center justify-between gap-2">
+                      <button type="button" onClick={() => setActiveIndex(index)} aria-pressed={activeIndex === index} className="flex items-center gap-2 rounded-lg text-left text-sm font-bold focus-visible:outline-2 focus-visible:outline-teal-400">
+                        <span className={'flex h-8 w-8 items-center justify-center rounded-lg text-xs font-black ' + (activeIndex === index ? 'bg-teal-400 text-slate-950' : 'bg-white/10 text-slate-300')}>{LABELS[index]}</span>
+                        Vé {LABELS[index]}
+                      </button>
+                      <div className="flex items-center gap-1">
+                        <button type="button" onClick={() => regenerateOne(index)} title={'Tạo lại vé ' + LABELS[index]} aria-label={'Tạo lại vé ' + LABELS[index]} className="rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-teal-300 focus-visible:outline-2 focus-visible:outline-teal-400"><RefreshCcw className="h-4 w-4" /></button>
+                        <button type="button" onClick={() => clearTicket(index)} title={'Xóa vé ' + LABELS[index]} aria-label={'Xóa vé ' + LABELS[index]} className="rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-rose-300 focus-visible:outline-2 focus-visible:outline-teal-400"><Trash2 className="h-4 w-4" /></button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-6 gap-1.5">
+                      {Array.from({ length: 6 }, (_, i) => {
+                        const num = ticket[i];
+                        const favorite = num && parsed.seeds.includes(num);
+                        return <span key={i} className={'flex aspect-square min-w-0 items-center justify-center rounded-full border font-mono text-xs font-black tabular-nums sm:text-sm ' + (num ? (favorite ? 'border-amber-300/80 bg-amber-300 text-[#162133]' : 'border-teal-400/40 bg-[#173a44] text-teal-200') : 'border-dashed border-white/15 bg-white/[0.03] text-slate-600')} aria-label={num ? 'Số ' + num : 'Ô trống'}>{num || '·'}</span>;
+                      })}
+                    </div>
+                    <button type="button" onClick={() => setActiveIndex(index)} className={'mt-3 w-full rounded-lg px-2 py-1.5 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-teal-400 ' + (activeIndex === index ? 'bg-teal-400/15 text-teal-300' : 'bg-white/[0.04] text-slate-400 hover:text-white')}>{activeIndex === index ? 'Đang chỉnh sửa' : 'Chọn để chỉnh sửa'}</button>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 border-t border-white/10 pt-5">
+                <div className="mb-2 flex items-center justify-between gap-3 text-sm">
+                  <span className="font-bold">Độ phủ của bộ vé</span>
+                  <span className="font-mono font-semibold text-teal-300">{summary.distinct}/{summary.maximum} số · {summary.ratio}%</span>
+                </div>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-300 transition-[width]" style={{ width: summary.ratio + '%' }} />
+                </div>
+                <p className="mt-2 text-xs text-slate-400">Số khác nhau trên tất cả vé hoàn chỉnh; không phải tỷ lệ trúng thưởng.</p>
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-white/10 bg-[#111f33] p-5 sm:p-6">
+              <div className="mb-5 flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-teal-300"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-teal-400 text-xs text-slate-950">3</span> Chỉnh sửa thủ công</div>
+                  <h2 className="text-xl font-bold">Bảng chọn số · Vé {LABELS[activeIndex]}</h2>
+                  <p className="mt-1 text-sm text-slate-400">Chạm số đang chọn để bỏ, sau đó chọn số khác.</p>
+                </div>
+                <span className="rounded-lg bg-white/10 px-3 py-2 font-mono text-sm font-bold text-teal-300">{tickets[activeIndex].length}/6</span>
+              </div>
+              <div className="grid grid-cols-7 gap-2 sm:grid-cols-10" role="group" aria-label={'Bảng chọn số vé ' + LABELS[activeIndex]}>
+                {grid.map(num => {
+                  const isSelected = tickets[activeIndex].includes(num);
+                  return (
+                    <button type="button" key={num} aria-pressed={isSelected} aria-label={'Chọn số ' + num} disabled={!isSelected && tickets[activeIndex].length >= 6} onClick={() => toggleTicketNumber(num)} className={'aspect-square min-w-0 rounded-xl border font-mono text-xs font-black transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:text-sm ' + (isSelected ? 'border-teal-300 bg-teal-400 text-slate-950' : 'border-white/10 bg-[#0a1525] text-slate-300 hover:border-teal-300/50 hover:bg-teal-400/10 disabled:cursor-not-allowed disabled:opacity-35')}>{num}</button>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="rounded-3xl border border-white/10 bg-[#111f33] p-5 sm:p-6">
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-bold"><Check className="h-5 w-5 text-teal-300" /> Xuất bộ vé</h2>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button type="button" onClick={copyTickets} disabled={!summary.count} className="flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-3.5 text-sm font-bold transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40">
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />} {copied ? 'Đã sao chép' : 'Sao chép bộ vé'}
+                </button>
+                <button type="button" onClick={openSMS} disabled={!summary.count} className="flex items-center justify-center gap-2 rounded-xl border border-teal-400/50 bg-teal-400/10 px-4 py-3.5 text-sm font-bold text-teal-300 transition-colors hover:bg-teal-400/20 disabled:cursor-not-allowed disabled:opacity-40"><Send className="h-4 w-4" /> Soạn SMS</button>
+              </div>
+              <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-slate-400"><Info className="mt-0.5 h-4 w-4 shrink-0" /> Chỉ mở ứng dụng tin nhắn, không tự gửi hoặc mua vé. Vui lòng kiểm tra cú pháp, đầu số và giá trước khi gửi.</p>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }
