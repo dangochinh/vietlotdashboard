@@ -295,7 +295,7 @@ export default function DailyAnalysis({ data, activeTab }) {
           </div>
           <p className="text-xs text-gray-500 mt-4 leading-relaxed">
             Số liệu cặp số cho thấy các lần cùng xuất hiện trong quá khứ, không chứng minh chúng có khả năng cùng xuất hiện cao hơn ở kỳ sau.
-            — một chiến thuật phổ biến trong cộng đồng người chơi xổ số chuyên nghiệp.
+            Các mối liên hệ lịch sử chỉ mang tính mô tả.
           </p>
         </div>
       </div>
