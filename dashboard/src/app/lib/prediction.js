@@ -1,4 +1,5 @@
 import { MAX_NUMBERS } from './constants';
+import { validateSeeds, isValidTicket, uniqueTicketKey } from './ticketValidation.mjs';
 
 // ============================================================
 // COVERAGE MAXIMIZER ALGORITHM
@@ -179,9 +180,8 @@ function lightValidate(ticket, maxNum) {
 export function predictCoverageMulti(inputArray, targetCount, activeTab, data, clientId = '', attemptOffset = 0) {
     const maxNum = MAX_NUMBERS[activeTab];
 
-    if (!inputArray || inputArray.length === 0) {
-        return { error: 'Vui lòng nhập ít nhất 1 số', tickets: [] };
-    }
+    const seedError = validateSeeds(inputArray, maxNum, targetCount);
+    if (seedError) return { error: seedError, tickets: [] };
 
     if (!data || data.length < 30) {
         return { error: 'Cần ít nhất 30 kỳ lịch sử để phân tích.', tickets: [] };
@@ -347,9 +347,12 @@ export function predictCoverageMulti(inputArray, targetCount, activeTab, data, c
 
         // Return only the generated numbers (exclude user input)
         const generated = ticket.filter(n => !inputArray.includes(n));
+        if (!isValidTicket(ticket, inputArray, maxNum)) return { error: 'Không tạo được bộ vé hợp lệ', tickets: [] };
         finalTickets.push(generated);
     }
 
+    const keys = finalTickets.map(t => uniqueTicketKey([...inputArray, ...t]));
+    if (new Set(keys).size !== keys.length) return { error: 'Các bộ vé bị trùng, vui lòng tạo lại', tickets: [] };
     return { error: '', tickets: finalTickets };
 }
 
@@ -368,9 +371,8 @@ export function predictCoverageMulti(inputArray, targetCount, activeTab, data, c
 export function predictCoverageSingle(inputArray, targetCount, activeTab, data, clientId = '', attemptOffset = 0) {
     const maxNum = MAX_NUMBERS[activeTab];
 
-    if (!inputArray || inputArray.length === 0) {
-        return { error: 'Vui lòng nhập ít nhất 1 số', numbers: [] };
-    }
+    const seedError = validateSeeds(inputArray, maxNum, targetCount);
+    if (seedError) return { error: seedError, numbers: [] };
 
     if (!data || data.length < 30) {
         return { error: 'Cần ít nhất 30 kỳ lịch sử để phân tích.', numbers: [] };
