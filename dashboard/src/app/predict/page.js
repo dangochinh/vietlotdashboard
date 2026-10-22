@@ -70,22 +70,7 @@ export default function PredictPage() {
         return rawInput ? rawInput.split(/\s+/).map(n => n.padStart(2, '0')) : [];
     };
 
-    const validateInput = (inputArray) => {
-        return validateSeeds(inputArray, MAX_NUMBERS[activeTab], 6 - inputArray.length) || null;
-        const uniqueInputs = new Set(inputArray);
-        if (uniqueInputs.size !== inputArray.length) {
-            return "Vui lòng không nhập các số trùng nhau";
-        }
-        if (inputArray.length < 1 || inputArray.length > 3) {
-            return "Vui lòng nhập từ 1 đến 3 số";
-        }
-        const maxNum = MAX_NUMBERS[activeTab];
-        const invalidNumber = inputArray.find(n => parseInt(n) < 1 || parseInt(n) > maxNum);
-        if (invalidNumber) {
-            return `Vui lòng nhập số từ 01 đến ${maxNum}`;
-        }
-        return null;
-    };
+    const validateInput = (inputArray) => validateSeeds(inputArray, MAX_NUMBERS[activeTab], 6 - inputArray.length) || null;
 
     const handlePredict = (type = 'all', targetIndex = 0) => {
         setIsPredicting(true);
