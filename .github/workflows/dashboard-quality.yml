@@ -20,6 +20,7 @@ jobs:
       - run: npm run test
       - run: npm run lint
       - run: npm run build
+      - run: npm install --no-save @playwright/test
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
         env:
