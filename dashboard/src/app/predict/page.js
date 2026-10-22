@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Wand2, AlertCircle, Loader2, Trash2, ArrowDown, RefreshCw, Send, ArrowLeft, Shield } from 'lucide-react';
 import Ball from '../components/Ball';
 import { MAX_NUMBERS } from '../lib/constants';
+import { validateSeeds } from '../lib/ticketValidation.mjs';
 import { useVietlottData } from '../hooks/useVietlottData';
 import { predictCoverageMulti, predictCoverageSingle, calculateCoverage } from '../lib/prediction';
 
@@ -69,21 +70,7 @@ export default function PredictPage() {
         return rawInput ? rawInput.split(/\s+/).map(n => n.padStart(2, '0')) : [];
     };
 
-    const validateInput = (inputArray) => {
-        const uniqueInputs = new Set(inputArray);
-        if (uniqueInputs.size !== inputArray.length) {
-            return "Vui lòng không nhập các số trùng nhau";
-        }
-        if (inputArray.length < 1 || inputArray.length > 3) {
-            return "Vui lòng nhập từ 1 đến 3 số";
-        }
-        const maxNum = MAX_NUMBERS[activeTab];
-        const invalidNumber = inputArray.find(n => parseInt(n) < 1 || parseInt(n) > maxNum);
-        if (invalidNumber) {
-            return `Vui lòng nhập số từ 01 đến ${maxNum}`;
-        }
-        return null;
-    };
+    const validateInput = (inputArray) => validateSeeds(inputArray, MAX_NUMBERS[activeTab], 6 - inputArray.length) || null;
 
     const handlePredict = (type = 'all', targetIndex = 0) => {
         setIsPredicting(true);
@@ -192,7 +179,7 @@ export default function PredictPage() {
                     <div className="flex items-center gap-2">
                         <Wand2 className="w-5 h-5 text-purple-400" />
                         <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-indigo-400">
-                            Dự Đoán
+                            Tạo bộ vé
                         </h1>
                     </div>
 
@@ -233,9 +220,10 @@ export default function PredictPage() {
                         <div className="flex items-center justify-center gap-2 mb-4 py-2 px-4 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl">
                             <Shield className="w-4 h-4 text-amber-400" />
                             <span className="text-xs font-semibold text-amber-300/90">
-                                Chiến lược Coverage — Crypto-Secure Pseudo-Random Number Generator (CSPRNG)
+                                Chiến lược Coverage — phân bổ số theo thống kê lịch sử (không dự đoán kết quả)
                             </span>
                         </div>
+                        <p className="text-xs text-slate-400 text-center mb-4">Mỗi tổ hợp hợp lệ có xác suất như nhau trong một kỳ quay công bằng. Độ phủ chỉ mô tả sự đa dạng giữa các vé, không phải xác suất trúng.</p>
 
                         {/* Input + Actions */}
                         <div className="flex gap-2 mb-4">
