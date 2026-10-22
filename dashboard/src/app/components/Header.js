@@ -1,52 +1,27 @@
 import Link from 'next/link';
-import { Info, Wand2 } from 'lucide-react';
+import { BarChart3, Info, Layers3, Sparkles } from 'lucide-react';
 
 export default function Header({ activeTab, setActiveTab, lastUpdated, onInfoOpen }) {
-    return (
-        <header className="flex flex-col md:flex-row items-center justify-between border-b border-gray-800 pb-3 md:pb-4 sticky top-0 z-50 bg-[#0E1217]/95 backdrop-blur-xl pt-3 md:pt-4 shadow-2xl rounded-b-xl md:rounded-b-2xl px-4 -mx-4 mb-4">
-            <div className="text-center md:text-left w-full md:w-auto">
-                <h1 className="text-3xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-emerald-600 flex items-center justify-center md:justify-start gap-2 md:gap-3">
-                    VIETLOTT <span className="text-white">STUDIO</span>
-                </h1>
-                <p className="text-gray-400 mt-1 md:mt-2 text-xs md:text-sm hidden md:block">Kết quả quay số, phân tích thống kê &amp; công cụ tạo bộ vé</p>
-                {lastUpdated && (
-                    <p className="text-emerald-400/80 mt-1.5 md:mt-2 text-[10px] md:text-xs font-mono bg-emerald-900/20 inline-block px-1.5 md:px-2 py-0.5 rounded border border-emerald-800/30">
-                        ⏱ Dữ liệu đồng bộ lần cuối: {lastUpdated}
-                    </p>
-                )}
-            </div>
-
-            <div className="mt-3 md:mt-0 flex p-1 bg-gray-900 rounded-xl border border-gray-800 shadow-inner w-full md:w-auto">
-                <button
-                    onClick={() => setActiveTab('Mega645')}
-                    className={`flex-1 md:flex-none text-center px-4 md:px-6 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-semibold transition-all ${activeTab === 'Mega645' ? 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
-                >
-                    Mega 6/45
-                </button>
-                <button
-                    onClick={() => setActiveTab('Power655')}
-                    className={`flex-1 md:flex-none text-center px-4 md:px-6 py-1.5 md:py-2 rounded-lg text-xs md:text-sm font-semibold transition-all ${activeTab === 'Power655' ? 'bg-gradient-to-r from-teal-500 to-emerald-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
-                >
-                    Power 6/55
-                </button>
-            </div>
-
-            <div className="mt-3 md:mt-0 flex items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
-                <button
-                    onClick={onInfoOpen}
-                    className="flex-1 md:flex-none flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 md:py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-xl font-semibold transition-all shadow-lg border border-gray-700 text-xs md:text-sm"
-                >
-                    <Info className="w-4 h-4 md:w-4 md:h-4" />
-                    <span className="inline">Giới Thiệu</span>
-                </button>
-                <Link
-                    href="/predict"
-                    className="flex-1 md:flex-none flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-indigo-500/30 border border-indigo-400/30 text-xs md:text-sm"
-                >
-                    <Wand2 className="w-4 h-4 md:w-4 md:h-4" />
-                    Tạo Bộ Vé
-                </Link>
-            </div>
-        </header>
-    );
+  return (
+    <header className="sticky top-0 z-50 -mx-4 border-b border-white/10 bg-[#0b1525]/95 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
+        <Link href="/" className="flex items-center gap-2 text-base font-black tracking-[0.13em] text-white sm:text-lg">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-400 text-[#08111f]"><Layers3 className="h-5 w-5" /></span>
+          VIETLOTT<span className="text-teal-400">STUDIO</span>
+        </Link>
+        <nav className="flex items-center gap-1.5 sm:gap-2" aria-label="Điều hướng chính">
+          <span aria-current="page" className="hidden items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white md:inline-flex"><BarChart3 className="h-4 w-4" /> Thống kê</span>
+          <button type="button" onClick={onInfoOpen} className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-300 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-teal-400"><Info className="h-4 w-4" /><span className="hidden sm:inline">Giới thiệu</span></button>
+          <Link href="/predict" className="inline-flex items-center gap-2 rounded-xl bg-teal-400 px-3 py-2 text-sm font-black text-[#08111f] transition-colors hover:bg-teal-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:px-4"><Sparkles className="h-4 w-4" /> Tạo Bộ Vé</Link>
+        </nav>
+      </div>
+      <div className="mx-auto mt-3 flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-3">
+        <div className="flex rounded-xl border border-white/10 bg-[#071321] p-1" role="group" aria-label="Chọn loại hình xổ số">
+          <button type="button" aria-pressed={activeTab === 'Mega645'} onClick={() => setActiveTab('Mega645')} className={'rounded-lg px-3 py-2 text-xs font-bold transition-colors sm:px-5 sm:text-sm ' + (activeTab === 'Mega645' ? 'bg-teal-400 text-slate-950' : 'text-slate-400 hover:text-white')}>Mega 6/45</button>
+          <button type="button" aria-pressed={activeTab === 'Power655'} onClick={() => setActiveTab('Power655')} className={'rounded-lg px-3 py-2 text-xs font-bold transition-colors sm:px-5 sm:text-sm ' + (activeTab === 'Power655' ? 'bg-teal-400 text-slate-950' : 'text-slate-400 hover:text-white')}>Power 6/55</button>
+        </div>
+        <p className="text-[11px] leading-4 text-slate-400 sm:text-xs">{lastUpdated ? 'Dữ liệu cập nhật: ' + lastUpdated : 'Lịch sử quay số · Phân tích thống kê'}</p>
+      </div>
+    </header>
+  );
 }
