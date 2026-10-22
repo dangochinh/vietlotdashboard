@@ -33,7 +33,7 @@ test('mobile Power 6/55 editing, responsive and evidence', async({page},testInfo
   await page.getByRole('button',{name:'Yêu thích số 55'}).click();
   await page.getByRole('button',{name:'Tạo 5 Vé'}).click();
   await expect(page.getByTestId('ticket-0').getByLabel('Số 55')).toBeVisible();
-  await page.getByRole('button',{name:'Chọn để chỉnh sửa'}).nth(1).click();
+  await page.getByTestId('ticket-1').getByRole('button',{name:'Chọn để chỉnh sửa'}).click();
   await page.getByRole('button',{name:'Xóa vé B'}).click();
   await expect(page.getByTestId('ticket-1').locator('[aria-label="Ô trống"]')).toHaveCount(6);
   await page.screenshot({path:testInfo.outputPath('power-655-edited.png'),fullPage:true});
@@ -44,7 +44,7 @@ test('mobile Power 6/55 editing, responsive and evidence', async({page},testInfo
 test('dashboard navigation remains accessible',async({page},testInfo)=>{
   await page.goto('/');
   await expect(page.getByRole('heading',{name:/VIETLOTT|Vietlott/i}).first()).toBeVisible();
-  await page.getByRole('link',{name:/Tạo Bộ Vé/i}).click();
+  await page.getByRole('navigation',{name:'Điều hướng chính'}).getByRole('link',{name:/Tạo Bộ Vé/i}).click();
   await expect(page).toHaveURL(/\/predict/);
   await page.screenshot({path:testInfo.outputPath('navigation.png'),fullPage:true});
 });
