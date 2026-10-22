@@ -33,7 +33,7 @@ export default function SEOContent() {
           <div className="bg-[#1A212A] p-4 rounded-xl border border-gray-800/60">
             <h3 className="font-bold text-emerald-400 mb-2">1. Tần Suất Xuất Hiện (Frequency)</h3>
             <p className="text-sm text-gray-400 leading-relaxed">
-              Biểu đồ liệt kê số lần xuất hiện của từng con số trong toàn bộ lịch sử kỳ quay. Những số có tần suất cao thường được giới chuyên môn gọi là "số nóng" (Hot Numbers). Người chơi có thể sử dụng dữ liệu này để ưu tiên chọn những con số đang trong chu kỳ rơi nhiều.
+              Biểu đồ liệt kê số lần xuất hiện của từng con số trong lịch sử được ghi nhận. Đây là dữ liệu mô tả các kỳ quay đã diễn ra; tần suất quá khứ không làm thay đổi khả năng xuất hiện của một số ở kỳ quay công bằng tiếp theo.
             </p>
           </div>
           <div className="bg-[#1A212A] p-4 rounded-xl border border-gray-800/60">
@@ -45,7 +45,7 @@ export default function SEOContent() {
           <div className="bg-[#1A212A] p-4 rounded-xl border border-gray-800/60">
             <h3 className="font-bold text-emerald-400 mb-2">3. Số Lâu Chưa Về (Cold Numbers)</h3>
             <p className="text-sm text-gray-400 leading-relaxed">
-              Theo định luật số lớn trong xác suất thống kê, mọi con số cuối cùng đều sẽ xuất hiện với tỉ lệ ngang nhau. Biểu đồ "Số gan" hiển thị những con số đã "vắng mặt" nhiều kỳ liên tiếp. Đầu tư vào các số lạnh đang ở ngưỡng cực đại là chiến thuật của nhiều người chơi chuyên nghiệp.
+              Biểu đồ số lâu chưa xuất hiện thống kê khoảng cách từ lần ra gần nhất. Một số vắng mặt nhiều kỳ không vì thế có khả năng xuất hiện cao hơn ở kỳ tiếp theo; mỗi kỳ quay độc lập với các kỳ trước.
             </p>
           </div>
           <div className="bg-[#1A212A] p-4 rounded-xl border border-gray-800/60">
@@ -68,7 +68,7 @@ export default function SEOContent() {
           </h2>
         </div>
         <p className="leading-relaxed text-sm md:text-base text-gray-400">
-          Nền tảng này không chỉ là một bảng hiển thị số liệu khô khan, mà là một sản phẩm phần mềm được thiết kế tối ưu hóa trải nghiệm người dùng. Chúng tôi cam kết duy trì nội dung sạch, dữ liệu minh bạch không qua chỉnh sửa, tuân thủ nghiêm ngặt các nguyên tắc chất lượng dành cho quản trị viên web (Webmaster Quality Guidelines). Mọi tính năng từ biểu đồ, tra cứu, cho đến thuật toán gợi ý đều được lập trình nhằm cung cấp tiện ích thực sự, đem lại "high-value content" cho người truy cập thường xuyên.
+          Nền tảng hiển thị số liệu thống kê, lịch sử kỳ quay và công cụ tạo bộ vé. Các thuật toán phân bổ phục vụ mục đích tham khảo và trực quan hóa, không cam kết dự báo hay gia tăng xác suất trúng thưởng.
         </p>
       </section>
 
