@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --test src/app/lib/*.test.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
