@@ -21,8 +21,8 @@ test('invalid favorites are rejected before ticket generation', async({page},tes
   await page.goto('/predict');
   await page.getByPlaceholder(/Nhập hạt giống/).fill('0101');
   await page.getByRole('button',{name:'Tạo 5 Vé'}).click();
-  await expect(page.getByRole('alert')).toContainText('trùng nhau');
-  await expect(page.getByText('0/5')).toBeVisible();
+  await expect(page.getByText('Vui lòng không nhập các số trùng nhau')).toBeVisible();
+  await expect(page.getByTestId('ticket-0').locator('[aria-label="Ô trống"]')).toHaveCount(6);
   await page.screenshot({path:testInfo.outputPath('duplicate-validation.png'),fullPage:true});
 });
 
