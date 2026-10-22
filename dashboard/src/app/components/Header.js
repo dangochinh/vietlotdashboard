@@ -6,9 +6,9 @@ export default function Header({ activeTab, setActiveTab, lastUpdated, onInfoOpe
         <header className="flex flex-col md:flex-row items-center justify-between border-b border-gray-800 pb-3 md:pb-4 sticky top-0 z-50 bg-[#0E1217]/95 backdrop-blur-xl pt-3 md:pt-4 shadow-2xl rounded-b-xl md:rounded-b-2xl px-4 -mx-4 mb-4">
             <div className="text-center md:text-left w-full md:w-auto">
                 <h1 className="text-3xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-teal-400 to-emerald-600 flex items-center justify-center md:justify-start gap-2 md:gap-3">
-                    Vietlott Analytics
+                    VIETLOTT <span className="text-white">STUDIO</span>
                 </h1>
-                <p className="text-gray-400 mt-1 md:mt-2 text-xs md:text-sm hidden md:block">Real-time statistics &amp; drawn frequency dashboard</p>
+                <p className="text-gray-400 mt-1 md:mt-2 text-xs md:text-sm hidden md:block">Kết quả quay số, phân tích thống kê &amp; công cụ tạo bộ vé</p>
                 {lastUpdated && (
                     <p className="text-emerald-400/80 mt-1.5 md:mt-2 text-[10px] md:text-xs font-mono bg-emerald-900/20 inline-block px-1.5 md:px-2 py-0.5 rounded border border-emerald-800/30">
                         ⏱ Dữ liệu đồng bộ lần cuối: {lastUpdated}
@@ -44,7 +44,7 @@ export default function Header({ activeTab, setActiveTab, lastUpdated, onInfoOpe
                     className="flex-1 md:flex-none flex items-center justify-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold transition-all shadow-lg hover:shadow-indigo-500/30 border border-indigo-400/30 text-xs md:text-sm"
                 >
                     <Wand2 className="w-4 h-4 md:w-4 md:h-4" />
-                    Dự Đoán
+                    Tạo Bộ Vé
                 </Link>
             </div>
         </header>
