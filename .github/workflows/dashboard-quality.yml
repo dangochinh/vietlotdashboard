@@ -1,5 +1,8 @@
 name: Dashboard quality and E2E evidence
 on:
+  push:
+    branches: [main]
+    paths: ['dashboard/**', '.github/workflows/dashboard-quality.yml']
   pull_request:
     paths: ['dashboard/**', '.github/workflows/dashboard-quality.yml']
   workflow_dispatch:
